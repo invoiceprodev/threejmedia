@@ -1,0 +1,8 @@
+{
+  "short_name": "Three J Media",
+  "name": "Three J Media",
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#0f172a",
+  "background_color": "#ffffff"
+}
