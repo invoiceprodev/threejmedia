@@ -1,35 +1,40 @@
 import { useScrollAnimation } from "@/hooks/use-scroll-animation";
+import portfolioOne from "../../../images/portfolio-1.png";
+import portfolioTwo from "../../../images/portfolio-2.png";
+import portfolioThree from "../../../images/portfolio-3.png";
+import portfolioFour from "../../../images/portfolio-4.png";
+import portfolioFive from "../../../images/portfolio-5.png";
 
 const portfolioItems = [
   {
     id: 1,
     name: "Bloom Boutique",
     category: "E-commerce",
-    image: "/images/portfolio-1.png",
+    image: portfolioOne,
   },
   {
     id: 2,
     name: "FinTech Launch",
     category: "Landing Page",
-    image: "/images/portfolio-2.png",
+    image: portfolioTwo,
   },
   {
     id: 3,
     name: "The Daily Brew",
     category: "Blog",
-    image: "/images/portfolio-3.png",
+    image: portfolioThree,
   },
   {
     id: 4,
     name: "Apex Consulting",
     category: "Business Site",
-    image: "/images/portfolio-4.png",
+    image: portfolioFour,
   },
   {
     id: 5,
     name: "StyleDrop SA",
     category: "E-commerce",
-    image: "/images/portfolio-5.png",
+    image: portfolioFive,
   },
 ];
 
