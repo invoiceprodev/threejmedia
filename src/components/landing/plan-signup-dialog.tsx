@@ -113,9 +113,9 @@ export function PlanSignupDialog({ open, planId, onOpenChange }: PlanSignupDialo
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent
-        className="max-w-[calc(48rem+20px)] overflow-hidden rounded-[2rem] border border-gray-200 bg-white p-0 shadow-2xl"
+        className="max-w-[calc(52rem+20px)] overflow-hidden rounded-[2rem] border border-gray-200 bg-white p-0 shadow-2xl"
         showCloseButton={status !== "submitting"}>
-        <div className="grid md:grid-cols-[0.95fr_1.05fr]">
+        <div className="grid md:grid-cols-[0.9fr_1.1fr]">
           <div className="bg-gray-950 px-6 py-8 sm:px-8 sm:py-10">
             <div className="inline-flex items-center gap-2 rounded-full border border-[#83c406]/35 bg-[#83c406]/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-[#dff3ab]">
               <ShieldCheck className="h-3.5 w-3.5" />
@@ -192,7 +192,7 @@ export function PlanSignupDialog({ open, planId, onOpenChange }: PlanSignupDialo
                 />
               </div>
 
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid gap-4 lg:grid-cols-2">
                 <PasswordField
                   id="signup-password"
                   label="Password"
