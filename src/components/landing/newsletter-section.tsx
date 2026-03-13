@@ -3,6 +3,7 @@ import { Mail, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useScrollAnimation } from "@/hooks/use-scroll-animation";
+import { apiRoutes } from "@/lib/env";
 
 export function NewsletterSection() {
   const heading = useScrollAnimation();
@@ -24,7 +25,7 @@ export function NewsletterSection() {
     setMessage("Submitting your details...");
 
     try {
-      const response = await fetch("/api/newsletter", {
+      const response = await fetch(apiRoutes.newsletter, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -77,7 +77,10 @@
   "scripts": {
     "dev": "refine dev",
     "build": "tsc && refine build",
-    "start": "refine start",
+    "dev:api": "node --watch api/index.js",
+    "start": "node api/index.js",
+    "start:web": "refine start",
+    "start:api": "node api/index.js",
     "refine": "refine"
   },
   "browserslist": {
