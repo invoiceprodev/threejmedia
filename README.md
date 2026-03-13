@@ -11,7 +11,7 @@ Database: Supabase Postgres
 
 | Variable | Where it belongs | Purpose |
 | --- | --- | --- |
-| `VITE_API_BASE_URL` | Vercel / frontend | Base URL for the API, for example `https://api.threejmedia.co.za` in production or `http://localhost:3001` locally |
+| `VITE_API_BASE_URL` | Vercel / frontend | Base URL for the API, for example `https://threejmedia-production.up.railway.app` while the custom domain is settling, `https://api.threejmedia.co.za` in production, or `http://localhost:3001` locally |
 | `VITE_SUPABASE_URL` | Vercel / frontend | Public Supabase project URL for client-side usage |
 | `VITE_SUPABASE_ANON_KEY` | Vercel / frontend | Public Supabase anon key for browser-safe access |
 | `VITE_AUTH0_DOMAIN` | Vercel / frontend | Auth0 domain for future login flows |

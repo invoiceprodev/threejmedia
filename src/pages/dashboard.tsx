@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { useAuth0 } from "@auth0/auth0-react";
 import { Building2, CreditCard, LoaderCircle, LogOut, ShieldCheck, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { apiRoutes, hasAuth0BrowserEnv } from "@/lib/env";
+import { hasAuth0BrowserEnv } from "@/lib/env";
+import { apiFetch } from "@/lib/api-client";
 import { navigate } from "@/lib/navigation";
 
 type DashboardPayload = {
@@ -43,7 +44,7 @@ export default function DashboardPage() {
 
       try {
         const accessToken = await getAccessTokenSilently();
-        const response = await fetch(apiRoutes.me, {
+        const response = await apiFetch("/api/me", {
           headers: {
             Authorization: `Bearer ${accessToken}`,
           },

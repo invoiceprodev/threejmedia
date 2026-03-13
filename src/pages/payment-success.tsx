@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useAuth0 } from "@auth0/auth0-react";
 import { CheckCircle2, LoaderCircle, ShieldCheck, TriangleAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { apiRoutes, hasAuth0BrowserEnv } from "@/lib/env";
+import { hasAuth0BrowserEnv } from "@/lib/env";
+import { apiFetch } from "@/lib/api-client";
 import { navigate } from "@/lib/navigation";
 
 type VerificationState = "loading" | "success" | "error";
@@ -34,7 +35,7 @@ export default function PaymentSuccessPage() {
 
     void (async () => {
       try {
-        const response = await fetch(`${apiRoutes.paystackVerify}?reference=${encodeURIComponent(reference)}`, {
+        const response = await apiFetch(`/api/paystack/verify?reference=${encodeURIComponent(reference)}`, {
           signal: controller.signal,
         });
 

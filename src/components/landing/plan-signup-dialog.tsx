@@ -10,7 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { apiRoutes } from "@/lib/env";
+import { apiFetch } from "@/lib/api-client";
 import { getPlanById, type PlanId } from "@/lib/plans";
 
 type PlanSignupDialogProps = {
@@ -80,7 +80,7 @@ export function PlanSignupDialog({ open, planId, onOpenChange }: PlanSignupDialo
     setMessage("Creating your account and preparing checkout...");
 
     try {
-      const response = await fetch(apiRoutes.signup, {
+      const response = await apiFetch("/api/signup", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -113,7 +113,7 @@ export function PlanSignupDialog({ open, planId, onOpenChange }: PlanSignupDialo
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent
-        className="max-w-3xl overflow-hidden rounded-[2rem] border border-gray-200 bg-white p-0 shadow-2xl"
+        className="max-w-[calc(48rem+20px)] overflow-hidden rounded-[2rem] border border-gray-200 bg-white p-0 shadow-2xl"
         showCloseButton={status !== "submitting"}>
         <div className="grid md:grid-cols-[0.95fr_1.05fr]">
           <div className="bg-gray-950 px-6 py-8 sm:px-8 sm:py-10">
