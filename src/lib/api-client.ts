@@ -17,9 +17,12 @@ export function getApiCandidateUrls(path: string) {
     primaryBaseUrl.includes("api.threejmedia.co.za") ||
     primaryBaseUrl.includes("threejmedia-production.up.railway.app");
 
-  const baseUrls = shouldUseRailwayFallback
-    ? unique([primaryBaseUrl, railwayFallbackBaseUrl])
-    : unique([primaryBaseUrl]);
+  const baseUrls =
+    shouldUseRailwayFallback && primaryBaseUrl?.includes("api.threejmedia.co.za")
+      ? unique([railwayFallbackBaseUrl, primaryBaseUrl])
+      : shouldUseRailwayFallback
+        ? unique([primaryBaseUrl, railwayFallbackBaseUrl])
+        : unique([primaryBaseUrl]);
 
   if (baseUrls.length === 0) {
     return [path];
