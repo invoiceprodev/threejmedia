@@ -10,9 +10,18 @@ import { PricingSection } from "@/components/landing/pricing-section";
 import { CTASection } from "@/components/landing/cta-section";
 import { Footer } from "@/components/landing/footer";
 import { BudgetWizard } from "@/components/landing/budget-wizard";
+import { PlanSignupDialog } from "@/components/landing/plan-signup-dialog";
+import { type PlanId } from "@/lib/plans";
 
 export default function LandingPage() {
   const [wizardOpen, setWizardOpen] = useState(false);
+  const [signupOpen, setSignupOpen] = useState(false);
+  const [selectedPlanId, setSelectedPlanId] = useState<PlanId | null>(null);
+
+  const handleSelectPlan = (planId: PlanId) => {
+    setSelectedPlanId(planId);
+    setSignupOpen(true);
+  };
 
   return (
     <div className="min-h-screen bg-gray-950 text-white">
@@ -23,7 +32,7 @@ export default function LandingPage() {
 
         <ServicesSection />
 
-        <PricingSection />
+        <PricingSection onSelectPlan={handleSelectPlan} />
 
         <NewsletterSection />
 
@@ -39,6 +48,7 @@ export default function LandingPage() {
       <Footer />
 
       <BudgetWizard open={wizardOpen} onClose={() => setWizardOpen(false)} />
+      <PlanSignupDialog open={signupOpen} planId={selectedPlanId} onOpenChange={setSignupOpen} />
     </div>
   );
 }

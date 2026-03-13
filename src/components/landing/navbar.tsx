@@ -2,6 +2,9 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
 import logo from "../../../images/threejmedia_logo.png";
+import { NavbarAuthActions } from "@/components/landing/navbar-auth-actions";
+import { hasAuth0BrowserEnv } from "@/lib/env";
+import { navigate } from "@/lib/navigation";
 
 const navLinks = [
   { label: "Services", href: "#services" },
@@ -72,6 +75,7 @@ export function Navbar() {
 
           {/* Desktop CTA */}
           <div className="hidden md:flex items-center gap-3">
+            <NavbarAuthActions />
             <Button
               size="sm"
               onClick={() => handleScroll("#contact")}
@@ -119,6 +123,15 @@ export function Navbar() {
             >
               Get Started
             </Button>
+            {hasAuth0BrowserEnv && (
+              <Button
+                variant="outline"
+                onClick={() => navigate("/dashboard")}
+                className="w-full border-gray-200 bg-transparent text-gray-900 hover:bg-gray-50"
+              >
+                Dashboard
+              </Button>
+            )}
           </div>
         </div>
       )}

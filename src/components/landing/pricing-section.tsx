@@ -1,71 +1,18 @@
 import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useScrollAnimation } from "@/hooks/use-scroll-animation";
+import { plans, type PlanId } from "@/lib/plans";
 
-const plans = [
-  {
-    name: "Starter",
-    price: "R1,999",
-    description: "Perfect for bloggers and personal brands getting started.",
-    features: [
-      "1-page website",
-      "Mobile responsive",
-      "Basic SEO setup",
-      "Contact form",
-      "1 month free hosting",
-      "Email support",
-    ],
-    cta: "Get Started",
-    popular: false,
-  },
-  {
-    name: "Business Website",
-    price: "R4,999",
-    description: "The most popular choice for growing small businesses.",
-    features: [
-      "Up to 5 pages",
-      "Mobile responsive",
-      "SEO optimised",
-      "Contact & lead forms",
-      "3 months free hosting",
-      "Priority support",
-      "Google Analytics setup",
-      "Social media links",
-    ],
-    cta: "Get Started",
-    popular: true,
-  },
-  {
-    name: "Pro",
-    price: "R7,999",
-    description:
-      "For established businesses that need a full digital presence.",
-    features: [
-      "Up to 10 pages",
-      "Custom design system",
-      "Advanced SEO",
-      "Blog / CMS setup",
-      "6 months free hosting",
-      "Dedicated support",
-      "Speed optimisation",
-      "Monthly maintenance",
-    ],
-    cta: "Get Started",
-    popular: false,
-  },
-];
+type PricingSectionProps = {
+  onSelectPlan: (planId: PlanId) => void;
+};
 
-export function PricingSection() {
+export function PricingSection({ onSelectPlan }: PricingSectionProps) {
   const heading = useScrollAnimation();
   const cards = useScrollAnimation({
     threshold: 0.05,
     rootMargin: "0px 0px -40px 0px",
   });
-
-  const handleScroll = (href: string) => {
-    const el = document.querySelector(href);
-    if (el) el.scrollIntoView({ behavior: "smooth" });
-  };
 
   return (
     <section id="pricing" className="py-16 md:py-24 bg-gray-50">
@@ -97,7 +44,7 @@ export function PricingSection() {
           className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 items-start"
         >
           {plans.map(
-            ({ name, price, description, features, cta, popular }, index) => (
+            ({ id, name, priceLabel, description, features, cta, popular }, index) => (
               <div
                 key={name}
                 style={{
@@ -137,7 +84,7 @@ export function PricingSection() {
                         popular ? "text-white" : "text-gray-900"
                       }`}
                     >
-                      {price}
+                      {priceLabel}
                     </p>
                     <p
                       className={`text-sm leading-relaxed ${
@@ -185,7 +132,7 @@ export function PricingSection() {
                   {/* CTA */}
                   <Button
                     size="lg"
-                    onClick={() => handleScroll("#contact")}
+                    onClick={() => onSelectPlan(id)}
                     className={`w-full font-bold rounded-xl h-12 text-base transition-all duration-200 ${
                       popular
                         ? "bg-white text-gray-900 hover:bg-gray-100 border-0 shadow-lg"

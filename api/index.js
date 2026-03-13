@@ -3,6 +3,9 @@ import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { handleHealthRequest, handleNewsletterRequest } from "./_lib/newsletter.js";
+import { handleSignupRequest } from "./_lib/signup.js";
+import { handlePaystackVerifyRequest } from "./_lib/paystack.js";
+import { handleMeRequest } from "./_lib/me.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -54,6 +57,41 @@ const server = createServer(async (request, response) => {
       serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
       table: process.env.SUPABASE_NEWSLETTER_TABLE,
       allowedOrigin: process.env.ALLOWED_ORIGIN,
+    });
+  }
+
+  if (url.pathname === "/api/signup") {
+    return handleSignupRequest(request, response, {
+      allowedOrigin: process.env.ALLOWED_ORIGIN,
+      auth0Domain: process.env.AUTH0_DOMAIN,
+      auth0ClientId: process.env.AUTH0_CLIENT_ID,
+      auth0Connection: process.env.AUTH0_CONNECTION,
+      paystackSecretKey: process.env.PAYSTACK_SECRET_KEY,
+      paystackCallbackUrl: process.env.PAYSTACK_CALLBACK_URL,
+      supabaseUrl: process.env.SUPABASE_URL,
+      serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
+      signupTable: process.env.SUPABASE_SIGNUPS_TABLE,
+    });
+  }
+
+  if (url.pathname === "/api/paystack/verify") {
+    return handlePaystackVerifyRequest(request, response, {
+      allowedOrigin: process.env.ALLOWED_ORIGIN,
+      paystackSecretKey: process.env.PAYSTACK_SECRET_KEY,
+      supabaseUrl: process.env.SUPABASE_URL,
+      serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
+      signupTable: process.env.SUPABASE_SIGNUPS_TABLE,
+    });
+  }
+
+  if (url.pathname === "/api/me") {
+    return handleMeRequest(request, response, {
+      allowedOrigin: process.env.ALLOWED_ORIGIN,
+      auth0Domain: process.env.AUTH0_DOMAIN,
+      auth0Audience: process.env.AUTH0_AUDIENCE,
+      supabaseUrl: process.env.SUPABASE_URL,
+      serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
+      signupTable: process.env.SUPABASE_SIGNUPS_TABLE,
     });
   }
 
