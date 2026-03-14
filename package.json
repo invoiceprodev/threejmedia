@@ -78,6 +78,8 @@
   },
   "scripts": {
     "dev": "refine dev",
+    "dev:all": "node scripts/dev-all.mjs",
+    "dev:api:once": "node api/index.js",
     "build": "tsc && refine build",
     "dev:api": "node --watch api/index.js",
     "start": "node api/index.js",

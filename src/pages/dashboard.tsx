@@ -47,6 +47,8 @@ export default function DashboardPage() {
         const response = await apiFetch("/api/me", {
           headers: {
             Authorization: `Bearer ${accessToken}`,
+            "X-Auth0-User-Id": user?.sub ?? "",
+            "X-User-Email": user?.email ?? "",
           },
           signal: controller.signal,
         });
@@ -71,10 +73,10 @@ export default function DashboardPage() {
     })();
 
     return () => controller.abort();
-  }, [getAccessTokenSilently, isAuthenticated, isLoading]);
+  }, [getAccessTokenSilently, isAuthenticated, isLoading, user?.email, user?.sub]);
 
   if (!hasAuth0BrowserEnv) {
-    return <DashboardNotice title="Auth0 not configured" message="Add the Auth0 browser variables to continue." />;
+    return <DashboardNotice title="Sign-in not configured" message="Add the browser sign-in variables to continue." />;
   }
 
   if (isLoading) {
@@ -84,11 +86,14 @@ export default function DashboardPage() {
   if (!isAuthenticated) {
     return (
       <DashboardNotice
-        title="Log in to continue"
+        title="Sign in to continue"
         message="Use the account you created during signup to access your customer dashboard."
-        actionLabel="Log in with Auth0"
+        actionLabel="Sign in"
         onAction={() =>
           void loginWithRedirect({
+            authorizationParams: {
+              prompt: "login",
+            },
             appState: {
               returnTo: "/dashboard",
             },
@@ -108,7 +113,7 @@ export default function DashboardPage() {
               Customer Dashboard
             </div>
             <h1 className="mt-4 text-3xl font-extrabold tracking-tight">Welcome back, {user?.name || user?.email}</h1>
-            <p className="mt-2 text-sm text-gray-300">Your account session is now managed by Auth0.</p>
+            <p className="mt-2 text-sm text-gray-300">Your secure sign-in session is active.</p>
           </div>
 
           <div className="flex gap-3">
@@ -147,7 +152,7 @@ export default function DashboardPage() {
             <div className="mt-5 space-y-2 text-sm text-gray-300">
               <p>Email: {profile?.email || user?.email || "Unavailable"}</p>
               <p>Name: {profile?.fullName || user?.name || "Unavailable"}</p>
-              <p>Auth0 ID: {profile?.auth0UserId || user?.sub || "Unavailable"}</p>
+              <p>Account ID: {profile?.auth0UserId || user?.sub || "Unavailable"}</p>
             </div>
           </div>
 
@@ -171,7 +176,7 @@ export default function DashboardPage() {
             <h2 className="text-xl font-bold">Next Steps</h2>
           </div>
           <p className="mt-4 max-w-3xl text-sm leading-relaxed text-gray-300">
-            This dashboard is now protected by Auth0. The next phase can expand this area with onboarding tasks,
+            This dashboard is now protected by secure sign-in. The next phase can expand this area with onboarding tasks,
             project updates, invoice history, and content requests tied to each signed-in client.
           </p>
         </div>

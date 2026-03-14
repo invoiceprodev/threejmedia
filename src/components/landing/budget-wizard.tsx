@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Check, X, ChevronRight, ChevronLeft, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { apiFetch } from "@/lib/api-client";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -401,12 +402,58 @@ function Step5({
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [submitMessage, setSubmitMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (name.trim() && email.trim()) {
+
+    if (!name.trim() || !email.trim() || !website || !hosting || !domain) {
+      setSubmitMessage("Please complete your details and selections before requesting your quote.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    setSubmitMessage("Sending your custom quote request...");
+
+    try {
+      const response = await apiFetch("/api/budget-quote", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: name.trim(),
+          email: email.trim(),
+          websiteTypeId: website.id,
+          addonIds,
+          hostingPlanId: hosting.id,
+          domainOptionId: domain.id,
+          onceOffTotal: onceOff,
+          monthlyTotal: monthly,
+          yearlyTotal: yearly,
+          summary: {
+            websiteTypeName: website.name,
+            addonNames: addons.map((addon) => addon.name),
+            hostingPlanName: hosting.name,
+            domainOptionName: domain.name,
+          },
+        }),
+      });
+
+      const payload = (await response.json().catch(() => null)) as { message?: string } | null;
+
+      if (!response.ok) {
+        throw new Error(payload?.message || "We could not send your custom quote right now.");
+      }
+
       setSubmitted(true);
+      setSubmitMessage(payload?.message || "Thanks. Your budget request has been sent.");
+    } catch (error) {
+      setSubmitMessage(error instanceof Error ? error.message : "We could not send your custom quote right now.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -488,7 +535,9 @@ function Step5({
             <Check className="w-6 h-6 text-gray-900" />
           </div>
           <p className="text-white text-lg font-bold">Thanks {name.trim()}!</p>
-          <p className="text-gray-400 text-sm leading-relaxed">We'll be in touch shortly with your custom quote.</p>
+          <p className="text-gray-400 text-sm leading-relaxed">
+            {submitMessage || "We'll be in touch shortly with your custom quote."}
+          </p>
           <p className="text-gray-500 text-xs">Check your inbox at {email.trim()}</p>
         </div>
       ) : (
@@ -526,11 +575,12 @@ function Step5({
           </div>
           <button
             type="submit"
-            disabled={!name.trim() || !email.trim()}
+            disabled={!name.trim() || !email.trim() || isSubmitting}
             className="w-full h-12 rounded-xl bg-black text-white font-bold text-sm flex items-center justify-center gap-2 hover:bg-gray-900 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
             <Sparkles className="w-4 h-4" />
-            Get My Custom Quote
+            {isSubmitting ? "Sending your quote..." : "Get My Custom Quote"}
           </button>
+          {submitMessage && <p className="text-center text-xs text-gray-400">{submitMessage}</p>}
           <p className="text-gray-500 text-xs text-center">No spam. We'll be in touch within 24 hours.</p>
         </form>
       )}

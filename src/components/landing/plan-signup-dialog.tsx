@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { apiFetch } from "@/lib/api-client";
 import { getPlanById, type PlanId } from "@/lib/plans";
+import { navigate } from "@/lib/navigation";
 
 type PlanSignupDialogProps = {
   open: boolean;
@@ -95,10 +96,24 @@ export function PlanSignupDialog({ open, planId, onOpenChange }: PlanSignupDialo
       });
 
       const payload = (await response.json().catch(() => null)) as
-        | { message?: string; authorizationUrl?: string }
+        | { message?: string; authorizationUrl?: string; step?: string; requiresEmailVerification?: boolean; email?: string }
         | null;
 
-      if (!response.ok || !payload?.authorizationUrl) {
+      if (!response.ok) {
+        console.error("[signup] API error", {
+          status: response.status,
+          payload,
+        });
+        throw new Error(payload?.message || "We could not start your signup right now.");
+      }
+
+      if (payload?.requiresEmailVerification) {
+        setMessage("Account created. Please verify your email before continuing to payment.");
+        navigate(`/signup/continue${payload.email ? `?email=${encodeURIComponent(payload.email)}` : ""}`);
+        return;
+      }
+
+      if (!payload?.authorizationUrl) {
         throw new Error(payload?.message || "We could not start your signup right now.");
       }
 

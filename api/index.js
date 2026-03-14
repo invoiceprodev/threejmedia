@@ -3,9 +3,10 @@ import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { handleHealthRequest, handleNewsletterRequest } from "./_lib/newsletter.js";
-import { handleSignupRequest } from "./_lib/signup.js";
+import { handleSignupContinueRequest, handleSignupRequest } from "./_lib/signup.js";
 import { handlePaystackVerifyRequest } from "./_lib/paystack.js";
 import { handleMeRequest } from "./_lib/me.js";
+import { handleBudgetQuoteRequest } from "./_lib/budget-quote.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -60,12 +61,35 @@ const server = createServer(async (request, response) => {
     });
   }
 
+  if (url.pathname === "/api/budget-quote") {
+    return handleBudgetQuoteRequest(request, response, {
+      supabaseUrl: process.env.SUPABASE_URL,
+      serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
+      table: process.env.SUPABASE_BUDGET_QUOTES_TABLE,
+      allowedOrigin: process.env.ALLOWED_ORIGIN,
+    });
+  }
+
   if (url.pathname === "/api/signup") {
     return handleSignupRequest(request, response, {
       allowedOrigin: process.env.ALLOWED_ORIGIN,
       auth0Domain: process.env.AUTH0_DOMAIN,
       auth0ClientId: process.env.AUTH0_CLIENT_ID,
       auth0Connection: process.env.AUTH0_CONNECTION,
+      auth0Audience: process.env.AUTH0_AUDIENCE,
+      paystackSecretKey: process.env.PAYSTACK_SECRET_KEY,
+      paystackCallbackUrl: process.env.PAYSTACK_CALLBACK_URL,
+      supabaseUrl: process.env.SUPABASE_URL,
+      serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
+      signupTable: process.env.SUPABASE_SIGNUPS_TABLE,
+    });
+  }
+
+  if (url.pathname === "/api/signup/continue") {
+    return handleSignupContinueRequest(request, response, {
+      allowedOrigin: process.env.ALLOWED_ORIGIN,
+      auth0Domain: process.env.AUTH0_DOMAIN,
+      auth0Audience: process.env.AUTH0_AUDIENCE,
       paystackSecretKey: process.env.PAYSTACK_SECRET_KEY,
       paystackCallbackUrl: process.env.PAYSTACK_CALLBACK_URL,
       supabaseUrl: process.env.SUPABASE_URL,

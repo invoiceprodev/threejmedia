@@ -6,13 +6,26 @@ function json(response, status, payload, extraHeaders = {}) {
   response.end(JSON.stringify(payload));
 }
 
+function getAllowedOrigins(allowedOrigin) {
+  return String(allowedOrigin || "")
+    .split(",")
+    .map((value) => value.trim())
+    .filter(Boolean);
+}
+
 function getCorsHeaders(origin, allowedOrigin) {
-  if (!origin || !allowedOrigin) {
+  if (!origin) {
+    return {};
+  }
+
+  const allowedOrigins = getAllowedOrigins(allowedOrigin);
+
+  if (!allowedOrigins.includes(origin)) {
     return {};
   }
 
   return {
-    "Access-Control-Allow-Origin": allowedOrigin,
+    "Access-Control-Allow-Origin": origin,
     Vary: "Origin",
   };
 }

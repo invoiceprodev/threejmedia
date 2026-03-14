@@ -11,7 +11,8 @@ Database: Supabase Postgres
 
 | Variable | Where it belongs | Purpose |
 | --- | --- | --- |
-| `VITE_API_BASE_URL` | Vercel / frontend | Base URL for the API, for example `https://threejmedia-production.up.railway.app` while the custom domain is settling, `https://api.threejmedia.co.za` in production, or `http://localhost:3001` locally |
+| `VITE_API_BASE_URL` | Vercel / frontend | Primary base URL for the API, for example `https://api.threejmedia.co.za` in production. Leave it blank locally to use the Vite proxy |
+| `VITE_API_FALLBACK_BASE_URL` | Vercel / frontend | Optional fallback API URL, for example `https://threejmedia-production.up.railway.app` while the custom domain is settling |
 | `VITE_SUPABASE_URL` | Vercel / frontend | Public Supabase project URL for client-side usage |
 | `VITE_SUPABASE_ANON_KEY` | Vercel / frontend | Public Supabase anon key for browser-safe access |
 | `VITE_AUTH0_DOMAIN` | Vercel / frontend | Auth0 domain for future login flows |
@@ -21,7 +22,8 @@ Database: Supabase Postgres
 | `SUPABASE_SERVICE_ROLE_KEY` | Railway / server | Supabase service role key used for secure inserts from the API |
 | `SUPABASE_NEWSLETTER_TABLE` | Railway / server | Supabase table name for newsletter signups |
 | `SUPABASE_SIGNUPS_TABLE` | Railway / server | Supabase table name for plan signup and payment records |
-| `ALLOWED_ORIGIN` | Railway / server | Frontend origin allowed to call the Railway API, for example `https://threejmedia.co.za` in production or `http://localhost:5173` locally |
+| `SUPABASE_BUDGET_QUOTES_TABLE` | Railway / server | Supabase table name for budget CTA quote requests |
+| `ALLOWED_ORIGIN` | Railway / server | Frontend origins allowed to call the API. Use a comma-separated list such as `http://localhost:5173,https://threejmedia.co.za` |
 | `AUTH0_DOMAIN` | Railway / server | Auth0 tenant domain used for database-connection signup |
 | `AUTH0_CLIENT_ID` | Railway / server | Auth0 application client ID used for signup |
 | `AUTH0_CONNECTION` | Railway / server | Auth0 database connection name |
@@ -31,9 +33,11 @@ Database: Supabase Postgres
 | `PAYSTACK_CALLBACK_URL` | Railway / server | Return URL after Paystack checkout completes |
 | `PORT` | Railway / server | Port used by the Railway API locally and in deployment |
 
-3. In Supabase SQL Editor, run [`supabase/newsletter_subscribers.sql`](/Users/jerry/Desktop/threejmedia.co.za/supabase/newsletter_subscribers.sql) and [`supabase/client_signups.sql`](/Users/jerry/Desktop/threejmedia.co.za/supabase/client_signups.sql).
-4. Run the frontend with `npm run dev`.
-5. Run the API with `npm run dev:api`.
+3. In Supabase SQL Editor, run [`supabase/newsletter_subscribers.sql`](/Users/jerry/Desktop/threejmedia.co.za/supabase/newsletter_subscribers.sql), [`supabase/client_signups.sql`](/Users/jerry/Desktop/threejmedia.co.za/supabase/client_signups.sql), and [`supabase/budget_quote_requests.sql`](/Users/jerry/Desktop/threejmedia.co.za/supabase/budget_quote_requests.sql).
+4. Run both services together with `npm run dev:all`.
+5. Or run them separately with `npm run dev` and `npm run dev:api`.
+6. `npm run dev:all` starts the API without watch mode so it stays stable on machines with low file watcher limits.
+7. For local frontend testing, leave `VITE_API_BASE_URL` empty so Vite proxies `/api/*` and `/health` to `http://localhost:3001` without browser CORS issues.
 
 ## Railway setup
 
@@ -74,8 +78,10 @@ Use a SPA application for the frontend login flow and a regular Auth0 API identi
 
 - `GET /health`
 - `POST /api/newsletter`
+- `POST /api/budget-quote`
 - `POST /api/signup`
+- `POST /api/signup/continue`
 - `GET /api/paystack/verify`
 - `GET /api/me`
 
-The newsletter form now posts to `VITE_API_BASE_URL/api/newsletter` and stores subscribers in Supabase. Pricing signups now post to `VITE_API_BASE_URL/api/signup`, create an Auth0 user, initialize Paystack checkout, and store the signup record in Supabase. After Paystack returns, `/payment/success` verifies the transaction and the protected `/dashboard` uses Auth0 access tokens against `GET /api/me`.
+The newsletter form now posts to `VITE_API_BASE_URL/api/newsletter` and stores subscribers in Supabase. The budget CTA posts to `VITE_API_BASE_URL/api/budget-quote` and stores custom quote requests in Supabase. Pricing signups now post to `VITE_API_BASE_URL/api/signup`, create an Auth0 user, and store the signup in a pending verification state. After the client confirms their email address, the app calls `POST /api/signup/continue` to initialize Paystack checkout. After Paystack returns, `/payment/success` verifies the transaction and the protected `/dashboard` uses Auth0 access tokens against `GET /api/me`.

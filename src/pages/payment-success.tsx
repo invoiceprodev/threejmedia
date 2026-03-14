@@ -18,7 +18,7 @@ type VerificationPayload = {
 };
 
 export default function PaymentSuccessPage() {
-  const { isAuthenticated, isLoading, loginWithRedirect } = useAuth0();
+  const { isAuthenticated, isLoading, loginWithPopup, loginWithRedirect } = useAuth0();
   const [status, setStatus] = useState<VerificationState>("loading");
   const [message, setMessage] = useState("Verifying your payment...");
   const [payload, setPayload] = useState<VerificationPayload | null>(null);
@@ -74,14 +74,29 @@ export default function PaymentSuccessPage() {
       return;
     }
 
-    await loginWithRedirect({
-      authorizationParams: {
-        ...(payload?.email ? { login_hint: payload.email } : {}),
-      },
-      appState: {
-        returnTo: "/dashboard",
-      },
-    });
+    setMessage("Opening secure sign-in...");
+
+    const authorizationParams = {
+      ...(payload?.email ? { login_hint: payload.email } : {}),
+      prompt: "login" as const,
+    };
+
+    try {
+      await loginWithPopup({
+        authorizationParams,
+      });
+      navigate("/dashboard");
+    } catch (error) {
+      console.warn("[auth] payment success popup login failed, falling back to redirect", error);
+      setMessage("Popup sign-in was blocked, redirecting to secure sign-in...");
+
+      await loginWithRedirect({
+        authorizationParams,
+        appState: {
+          returnTo: "/dashboard",
+        },
+      });
+    }
   };
 
   return (
@@ -135,7 +150,7 @@ export default function PaymentSuccessPage() {
               onClick={() => void handleContinue()}
               disabled={isLoading}
               className="h-12 rounded-xl bg-[#83c406] px-6 font-bold text-gray-950 hover:bg-[#97d71a]">
-              {isAuthenticated ? "Opening your dashboard..." : "Log in to your dashboard"}
+              {isAuthenticated ? "Open your dashboard" : "Sign in to your dashboard"}
             </Button>
           )}
 

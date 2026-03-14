@@ -32,24 +32,6 @@ function getCorsHeaders(origin, allowedOrigin) {
   };
 }
 
-async function insertSubscriber({ supabaseUrl, serviceRoleKey, table, subscriber }) {
-  const response = await fetch(`${supabaseUrl}/rest/v1/${table}`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      apikey: serviceRoleKey,
-      Authorization: `Bearer ${serviceRoleKey}`,
-      Prefer: "return=minimal,resolution=merge-duplicates",
-    },
-    body: JSON.stringify(subscriber),
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text().catch(() => "");
-    throw new Error(errorText || "Supabase insert failed.");
-  }
-}
-
 async function parseJsonBody(request) {
   if (typeof request.body === "string") {
     return JSON.parse(request.body);
@@ -76,13 +58,30 @@ async function parseJsonBody(request) {
   return JSON.parse(Buffer.concat(chunks).toString("utf8"));
 }
 
-export async function handleNewsletterRequest(request, response, options) {
+async function insertBudgetQuote({ supabaseUrl, serviceRoleKey, table, quote }) {
+  const response = await fetch(`${supabaseUrl}/rest/v1/${table}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      apikey: serviceRoleKey,
+      Authorization: `Bearer ${serviceRoleKey}`,
+      Prefer: "return=minimal",
+    },
+    body: JSON.stringify(quote),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text().catch(() => "");
+    throw new Error(errorText || "Unable to save budget quote.");
+  }
+}
+
+export async function handleBudgetQuoteRequest(request, response, options) {
   const {
     supabaseUrl,
     serviceRoleKey,
-    table = "newsletter_subscribers",
+    table = "budget_quote_requests",
     allowedOrigin = "",
-    source = "threejmedia.co.za",
   } = options;
 
   const origin = request.headers?.origin;
@@ -104,7 +103,7 @@ export async function handleNewsletterRequest(request, response, options) {
   }
 
   if (!supabaseUrl || !serviceRoleKey) {
-    return json(response, 503, { message: "Newsletter submissions are not configured yet." }, corsHeaders);
+    return json(response, 503, { message: "Budget quote requests are not configured yet." }, corsHeaders);
   }
 
   let payload;
@@ -117,9 +116,19 @@ export async function handleNewsletterRequest(request, response, options) {
 
   const name = String(payload?.name ?? "").trim();
   const email = String(payload?.email ?? "").trim().toLowerCase();
+  const websiteTypeId = String(payload?.websiteTypeId ?? "").trim();
+  const hostingPlanId = String(payload?.hostingPlanId ?? "").trim();
+  const domainOptionId = String(payload?.domainOptionId ?? "").trim();
+  const addonIds = Array.isArray(payload?.addonIds)
+    ? payload.addonIds.map((value) => String(value).trim()).filter(Boolean)
+    : [];
+  const onceOffTotal = Number(payload?.onceOffTotal ?? 0);
+  const monthlyTotal = Number(payload?.monthlyTotal ?? 0);
+  const yearlyTotal = Number(payload?.yearlyTotal ?? 0);
+  const summary = payload?.summary && typeof payload.summary === "object" ? payload.summary : null;
 
-  if (!name || !email) {
-    return json(response, 400, { message: "Name and email are required." }, corsHeaders);
+  if (!name || !email || !websiteTypeId || !hostingPlanId || !domainOptionId) {
+    return json(response, 400, { message: "Name, email, website type, hosting plan, and domain are required." }, corsHeaders);
   }
 
   if (!emailPattern.test(email)) {
@@ -127,28 +136,32 @@ export async function handleNewsletterRequest(request, response, options) {
   }
 
   try {
-    await insertSubscriber({
+    await insertBudgetQuote({
       supabaseUrl,
       serviceRoleKey,
       table,
-      subscriber: {
+      quote: {
         name,
         email,
-        source,
+        website_type_id: websiteTypeId,
+        addon_ids: addonIds,
+        hosting_plan_id: hostingPlanId,
+        domain_option_id: domainOptionId,
+        once_off_total: onceOffTotal,
+        monthly_total: monthlyTotal,
+        yearly_total: yearlyTotal,
+        summary,
         submitted_at: new Date().toISOString(),
       },
     });
 
-    return json(response, 200, { message: "Thanks. You're on the list." }, corsHeaders);
-  } catch {
-    return json(response, 502, { message: "Newsletter service is temporarily unavailable." }, corsHeaders);
+    return json(response, 200, { message: "Thanks. Your budget request has been sent." }, corsHeaders);
+  } catch (error) {
+    return json(
+      response,
+      502,
+      { message: error instanceof Error ? error.message : "Budget quote service is temporarily unavailable." },
+      corsHeaders,
+    );
   }
-}
-
-export function handleHealthRequest(_request, response) {
-  return json(response, 200, {
-    ok: true,
-    service: "threejmedia-api",
-    timestamp: new Date().toISOString(),
-  });
 }

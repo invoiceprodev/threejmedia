@@ -5,7 +5,7 @@ import { hasAuth0BrowserEnv } from "@/lib/env";
 import { navigate } from "@/lib/navigation";
 
 export function NavbarAuthActions() {
-  const { isAuthenticated, isLoading, loginWithRedirect, logout } = useAuth0();
+  const { isAuthenticated, isLoading, loginWithPopup, loginWithRedirect, logout } = useAuth0();
 
   if (!hasAuth0BrowserEnv) {
     return null;
@@ -41,15 +41,30 @@ export function NavbarAuthActions() {
     <Button
       size="sm"
       onClick={() =>
-        void loginWithRedirect({
-          appState: {
-            returnTo: "/dashboard",
-          },
-        })
+        void (async () => {
+          try {
+            await loginWithPopup({
+              authorizationParams: {
+                prompt: "login",
+              },
+            });
+            navigate("/dashboard");
+          } catch (error) {
+            console.warn("[auth] navbar popup login failed, falling back to redirect", error);
+            await loginWithRedirect({
+              authorizationParams: {
+                prompt: "login",
+              },
+              appState: {
+                returnTo: "/dashboard",
+              },
+            });
+          }
+        })()
       }
       className="rounded-lg bg-gray-900 text-white hover:bg-gray-700">
       <LogIn className="mr-2 h-4 w-4" />
-      Log in
+      Sign in
     </Button>
   );
 }

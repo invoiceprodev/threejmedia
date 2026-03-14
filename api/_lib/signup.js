@@ -28,13 +28,26 @@ function json(response, status, payload, extraHeaders = {}) {
   response.end(JSON.stringify(payload));
 }
 
+function getAllowedOrigins(allowedOrigin) {
+  return String(allowedOrigin || "")
+    .split(",")
+    .map((value) => value.trim())
+    .filter(Boolean);
+}
+
 function getCorsHeaders(origin, allowedOrigin) {
-  if (!origin || !allowedOrigin) {
+  if (!origin) {
+    return {};
+  }
+
+  const allowedOrigins = getAllowedOrigins(allowedOrigin);
+
+  if (!allowedOrigins.includes(origin)) {
     return {};
   }
 
   return {
-    "Access-Control-Allow-Origin": allowedOrigin,
+    "Access-Control-Allow-Origin": origin,
     Vary: "Origin",
   };
 }
@@ -65,6 +78,43 @@ async function parseJsonBody(request) {
   return JSON.parse(Buffer.concat(chunks).toString("utf8"));
 }
 
+function normalizeAuth0SignupError(payload) {
+  const description = String(payload?.description || payload?.message || "").trim();
+  const normalized = description.toLowerCase();
+
+  if (!description) {
+    return "We couldn't create your account right now.";
+  }
+
+  if (
+    normalized.includes("user already exists") ||
+    normalized.includes("already registered") ||
+    normalized.includes("already exists")
+  ) {
+    return "An account with this email already exists. Try signing in instead.";
+  }
+
+  if (
+    normalized.includes("passwordstrengtherror") ||
+    normalized.includes("password is too weak") ||
+    normalized.includes("password strength") ||
+    normalized.includes("password is weak") ||
+    normalized.includes("invalid password")
+  ) {
+    return "Your password is too weak. Use at least 8 characters with uppercase, lowercase, numbers, and a symbol.";
+  }
+
+  if (normalized.includes("invalid sign up") || normalized.includes("invalid signup")) {
+    return "We couldn't create your account with those details. Check the email format and use a stronger password.";
+  }
+
+  if (normalized.includes("signup is disabled") || normalized.includes("connection is disabled")) {
+    return "Account signup is temporarily unavailable. Please contact support.";
+  }
+
+  return description;
+}
+
 async function createAuth0User({ domain, clientId, connection, email, password, fullName, companyName }) {
   const response = await fetch(`https://${domain}/dbconnections/signup`, {
     method: "POST",
@@ -87,7 +137,7 @@ async function createAuth0User({ domain, clientId, connection, email, password, 
   const payload = await response.json().catch(() => null);
 
   if (!response.ok) {
-    throw new Error(payload?.description || payload?.message || "Unable to create your account right now.");
+    throw new Error(normalizeAuth0SignupError(payload));
   }
 
   return payload;
@@ -145,6 +195,69 @@ async function initializePaystackTransaction({
   return payload.data;
 }
 
+async function fetchLatestPendingSignup({ supabaseUrl, serviceRoleKey, table, email, auth0UserId }) {
+  if (!supabaseUrl || !serviceRoleKey) {
+    throw new Error("Signup storage is not configured yet.");
+  }
+
+  const filters = [];
+
+  if (auth0UserId) {
+    filters.push(`auth0_user_id.eq.${encodeURIComponent(auth0UserId)}`);
+  }
+
+  if (email) {
+    filters.push(`email.eq.${encodeURIComponent(email)}`);
+  }
+
+  if (filters.length === 0) {
+    throw new Error("We could not identify your pending signup.");
+  }
+
+  const response = await fetch(
+    `${supabaseUrl}/rest/v1/${table}?select=signup_reference,company_name,client_full_name,email,plan_id,plan_name,amount_zar,auth0_user_id,payment_status,created_at&payment_status=eq.pending_verification&or=(${filters.join(",")})&order=created_at.desc&limit=1`,
+    {
+      headers: {
+        apikey: serviceRoleKey,
+        Authorization: `Bearer ${serviceRoleKey}`,
+      },
+    },
+  );
+
+  const payload = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    throw new Error("Unable to load your pending signup.");
+  }
+
+  return Array.isArray(payload) ? payload[0] ?? null : null;
+}
+
+async function updateSignupRecordByReference({ supabaseUrl, serviceRoleKey, table, signupReference, update }) {
+  const response = await fetch(
+    `${supabaseUrl}/rest/v1/${table}?signup_reference=eq.${encodeURIComponent(signupReference)}`,
+    {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        apikey: serviceRoleKey,
+        Authorization: `Bearer ${serviceRoleKey}`,
+        Prefer: "return=representation",
+      },
+      body: JSON.stringify(update),
+    },
+  );
+
+  const payload = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    const errorText = typeof payload === "string" ? payload : JSON.stringify(payload);
+    throw new Error(errorText || "Unable to update your signup record.");
+  }
+
+  return Array.isArray(payload) ? payload[0] ?? null : payload;
+}
+
 async function insertSignupRecord({
   supabaseUrl,
   serviceRoleKey,
@@ -172,14 +285,43 @@ async function insertSignupRecord({
   }
 }
 
+function getVerifiedIdentity({ auth0User, submittedIdentity }) {
+  const auth0UserId = typeof auth0User?.sub === "string" ? auth0User.sub : "";
+
+  if (!auth0UserId) {
+    throw new Error("Your Auth0 session does not include a valid user identifier.");
+  }
+
+  const submittedUserId = String(submittedIdentity?.auth0UserId ?? "").trim();
+  const email = String(submittedIdentity?.email ?? "").trim().toLowerCase();
+  const emailVerified = submittedIdentity?.emailVerified === true;
+
+  if (submittedUserId !== auth0UserId) {
+    throw new Error("Your sign-in details could not be verified. Please sign in again.");
+  }
+
+  if (!email) {
+    throw new Error("Your verified account does not include an email address.");
+  }
+
+  if (!emailVerified) {
+    const error = new Error("Please confirm your email address before continuing to payment.");
+    error.statusCode = 409;
+    throw error;
+  }
+
+  return {
+    auth0UserId,
+    email,
+  };
+}
+
 export async function handleSignupRequest(request, response, options) {
   const {
     allowedOrigin = "",
     auth0Domain,
     auth0ClientId,
     auth0Connection,
-    paystackSecretKey,
-    paystackCallbackUrl,
     supabaseUrl,
     serviceRoleKey,
     signupTable = "client_signups",
@@ -203,8 +345,8 @@ export async function handleSignupRequest(request, response, options) {
     });
   }
 
-  if (!auth0Domain || !auth0ClientId || !auth0Connection || !paystackSecretKey || !paystackCallbackUrl) {
-    return json(response, 503, { message: "Signup and payment are not configured yet." }, corsHeaders);
+  if (!auth0Domain || !auth0ClientId || !auth0Connection) {
+    return json(response, 503, { message: "Signup is not configured yet." }, corsHeaders);
   }
 
   let payload;
@@ -235,8 +377,10 @@ export async function handleSignupRequest(request, response, options) {
   }
 
   const signupReference = randomUUID();
+  let failedStep = "unknown";
 
   try {
+    failedStep = "auth0_signup";
     const auth0User = await createAuth0User({
       domain: auth0Domain,
       clientId: auth0ClientId,
@@ -247,21 +391,7 @@ export async function handleSignupRequest(request, response, options) {
       companyName,
     });
 
-    const paystackTransaction = await initializePaystackTransaction({
-      secretKey: paystackSecretKey,
-      email,
-      fullName,
-      companyName,
-      plan,
-      callbackUrl: paystackCallbackUrl,
-      metadata: {
-        signup_reference: signupReference,
-        auth0_email: email,
-        auth0_user_id: auth0User?._id || auth0User?.user_id || "",
-        plan_id: plan.id,
-      },
-    });
-
+    failedStep = "supabase_insert";
     await insertSignupRecord({
       supabaseUrl,
       serviceRoleKey,
@@ -275,8 +405,8 @@ export async function handleSignupRequest(request, response, options) {
         plan_name: plan.name,
         amount_zar: plan.amountZar,
         auth0_user_id: auth0User?._id || auth0User?.user_id || null,
-        payment_reference: paystackTransaction.reference,
-        payment_status: "initialized",
+        payment_reference: null,
+        payment_status: "pending_verification",
         payment_provider: "paystack",
         created_at: new Date().toISOString(),
       },
@@ -286,20 +416,141 @@ export async function handleSignupRequest(request, response, options) {
       response,
       200,
       {
-        message: "Signup started successfully.",
+        message: "Account created. Please verify your email before continuing to payment.",
+        requiresEmailVerification: true,
+        email,
+      },
+      corsHeaders,
+    );
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "We could not complete signup right now.";
+
+    console.error("[signup] request failed", {
+      step: failedStep,
+      signupReference,
+      email,
+      planId,
+      message,
+    });
+
+    return json(
+      response,
+      502,
+      {
+        message,
+        step: failedStep,
+      },
+      corsHeaders,
+    );
+  }
+}
+
+export async function handleSignupContinueRequest(request, response, options) {
+  const {
+    allowedOrigin = "",
+    auth0Domain,
+    auth0Audience,
+    paystackSecretKey,
+    paystackCallbackUrl,
+    supabaseUrl,
+    serviceRoleKey,
+    signupTable = "client_signups",
+  } = options;
+
+  const origin = request.headers?.origin;
+  const corsHeaders = getCorsHeaders(origin, allowedOrigin);
+
+  if (request.method === "OPTIONS") {
+    return json(response, 204, {}, {
+      ...corsHeaders,
+      "Access-Control-Allow-Headers": "Content-Type, Authorization",
+      "Access-Control-Allow-Methods": "POST, OPTIONS",
+    });
+  }
+
+  if (request.method !== "POST") {
+    return json(response, 405, { message: "Method not allowed." }, {
+      ...corsHeaders,
+      Allow: "POST, OPTIONS",
+    });
+  }
+
+  if (!paystackSecretKey || !paystackCallbackUrl || !supabaseUrl || !serviceRoleKey) {
+    return json(response, 503, { message: "Payment is not configured yet." }, corsHeaders);
+  }
+
+  try {
+    const submittedIdentity = await parseJsonBody(request);
+    const { requireAuth0User } = await import("./auth.js");
+    const user = await requireAuth0User(request, { auth0Domain, auth0Audience });
+    const identity = getVerifiedIdentity({
+      auth0User: user,
+      submittedIdentity,
+    });
+    const pendingSignup = await fetchLatestPendingSignup({
+      supabaseUrl,
+      serviceRoleKey,
+      table: signupTable,
+      email: identity.email,
+      auth0UserId: identity.auth0UserId,
+    });
+
+    if (!pendingSignup) {
+      return json(response, 404, { message: "We could not find a pending signup for this account." }, corsHeaders);
+    }
+
+    const plan = planCatalog[pendingSignup.plan_id];
+
+    if (!plan) {
+      return json(response, 400, { message: "The selected plan is no longer available." }, corsHeaders);
+    }
+
+    const paystackTransaction = await initializePaystackTransaction({
+      secretKey: paystackSecretKey,
+      email: pendingSignup.email || identity.email,
+      fullName: pendingSignup.client_full_name,
+      companyName: pendingSignup.company_name,
+      plan,
+      callbackUrl: paystackCallbackUrl,
+      metadata: {
+        signup_reference: pendingSignup.signup_reference,
+        auth0_email: pendingSignup.email || identity.email,
+        auth0_user_id: pendingSignup.auth0_user_id || identity.auth0UserId,
+        plan_id: plan.id,
+      },
+    });
+
+    await updateSignupRecordByReference({
+      supabaseUrl,
+      serviceRoleKey,
+      table: signupTable,
+      signupReference: pendingSignup.signup_reference,
+      update: {
+        payment_reference: paystackTransaction.reference,
+        payment_status: "initialized",
+        auth0_user_id: pendingSignup.auth0_user_id || identity.auth0UserId,
+      },
+    });
+
+    return json(
+      response,
+      200,
+      {
+        message: "Email verified. Redirecting you to secure checkout.",
         authorizationUrl: paystackTransaction.authorization_url,
         reference: paystackTransaction.reference,
       },
       corsHeaders,
     );
   } catch (error) {
-    return json(
-      response,
-      502,
-      {
-        message: error instanceof Error ? error.message : "We could not complete signup right now.",
-      },
-      corsHeaders,
-    );
+    const statusCode = typeof error?.statusCode === "number" ? error.statusCode : 502;
+    const message = error instanceof Error ? error.message : "We could not continue to payment right now.";
+
+    console.error("[signup] continue request failed", {
+      message,
+      statusCode,
+    });
+
+    return json(response, statusCode, { message }, corsHeaders);
   }
 }

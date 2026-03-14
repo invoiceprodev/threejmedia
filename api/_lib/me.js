@@ -8,20 +8,47 @@ function json(response, status, payload, extraHeaders = {}) {
   response.end(JSON.stringify(payload));
 }
 
+function getAllowedOrigins(allowedOrigin) {
+  return String(allowedOrigin || "")
+    .split(",")
+    .map((value) => value.trim())
+    .filter(Boolean);
+}
+
 function getCorsHeaders(origin, allowedOrigin) {
-  if (!origin || !allowedOrigin) {
+  if (!origin) {
+    return {};
+  }
+
+  const allowedOrigins = getAllowedOrigins(allowedOrigin);
+
+  if (!allowedOrigins.includes(origin)) {
     return {};
   }
 
   return {
-    "Access-Control-Allow-Origin": allowedOrigin,
+    "Access-Control-Allow-Origin": origin,
     Vary: "Origin",
   };
 }
 
-async function fetchLatestSignup({ supabaseUrl, serviceRoleKey, table, email }) {
+async function fetchLatestSignup({ supabaseUrl, serviceRoleKey, table, email, auth0UserId }) {
+  const filters = [];
+
+  if (auth0UserId) {
+    filters.push(`auth0_user_id.eq.${encodeURIComponent(auth0UserId)}`);
+  }
+
+  if (email) {
+    filters.push(`email.eq.${encodeURIComponent(email)}`);
+  }
+
+  if (filters.length === 0) {
+    throw new Error("Unable to identify the current account.");
+  }
+
   const response = await fetch(
-    `${supabaseUrl}/rest/v1/${table}?select=company_name,plan_name,payment_status,payment_reference,created_at&email=eq.${encodeURIComponent(email)}&order=created_at.desc&limit=1`,
+    `${supabaseUrl}/rest/v1/${table}?select=company_name,plan_name,payment_status,payment_reference,created_at,email&or=(${filters.join(",")})&order=created_at.desc&limit=1`,
     {
       headers: {
         apikey: serviceRoleKey,
@@ -70,26 +97,33 @@ export async function handleMeRequest(request, response, options) {
       auth0Audience,
     });
 
-    const email = typeof user.email === "string" ? user.email : "";
+    const emailFromHeader = String(request.headers?.["x-user-email"] || request.headers?.["X-User-Email"] || "").trim();
+    const auth0UserIdFromHeader = String(
+      request.headers?.["x-auth0-user-id"] || request.headers?.["X-Auth0-User-Id"] || "",
+    ).trim();
+    const auth0UserId = typeof user.sub === "string" ? user.sub : "";
 
-    if (!email) {
-      return json(response, 400, { message: "No email claim was found in the token." }, corsHeaders);
+    if (auth0UserIdFromHeader && auth0UserId && auth0UserIdFromHeader !== auth0UserId) {
+      return json(response, 400, { message: "Your account session could not be verified." }, corsHeaders);
     }
+
+    const email = typeof user.email === "string" ? user.email : emailFromHeader;
 
     const latestSignup = await fetchLatestSignup({
       supabaseUrl,
       serviceRoleKey,
       table: signupTable,
       email,
+      auth0UserId: auth0UserId || auth0UserIdFromHeader,
     });
 
     return json(
       response,
       200,
       {
-        email,
+        email: email || latestSignup?.email || "",
         fullName: typeof user.name === "string" ? user.name : null,
-        auth0UserId: typeof user.sub === "string" ? user.sub : "",
+        auth0UserId,
         latestSignup: latestSignup
           ? {
               companyName: latestSignup.company_name,

@@ -1,4 +1,5 @@
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim();
+const apiFallbackBaseUrl = import.meta.env.VITE_API_FALLBACK_BASE_URL?.trim();
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL?.trim();
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY?.trim();
 const auth0Domain = import.meta.env.VITE_AUTH0_DOMAIN?.trim();
@@ -7,6 +8,7 @@ const auth0Audience = import.meta.env.VITE_AUTH0_AUDIENCE?.trim();
 
 export const env = {
   apiBaseUrl: apiBaseUrl ? apiBaseUrl.replace(/\/$/, "") : "",
+  apiFallbackBaseUrl: apiFallbackBaseUrl ? apiFallbackBaseUrl.replace(/\/$/, "") : "",
   supabase: {
     url: supabaseUrl ?? "",
     anonKey: supabaseAnonKey ?? "",
@@ -21,6 +23,7 @@ export const env = {
 export const apiRoutes = {
   newsletter: env.apiBaseUrl ? `${env.apiBaseUrl}/api/newsletter` : "/api/newsletter",
   signup: env.apiBaseUrl ? `${env.apiBaseUrl}/api/signup` : "/api/signup",
+  signupContinue: env.apiBaseUrl ? `${env.apiBaseUrl}/api/signup/continue` : "/api/signup/continue",
   paystackVerify: env.apiBaseUrl ? `${env.apiBaseUrl}/api/paystack/verify` : "/api/paystack/verify",
   me: env.apiBaseUrl ? `${env.apiBaseUrl}/api/me` : "/api/me",
   health: env.apiBaseUrl ? `${env.apiBaseUrl}/health` : "/health",
