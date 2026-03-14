@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Navbar } from "@/components/landing/navbar";
 import { HeroSection } from "@/components/landing/hero-section";
 import { ServicesSection } from "@/components/landing/services-section";
+import { DomainSearchSection } from "@/components/landing/domain-search-section";
 import { NewsletterSection } from "@/components/landing/newsletter-section";
 import { PortfolioSection } from "@/components/landing/portfolio-section";
 import { WhyChooseUsSection } from "@/components/landing/why-choose-us-section";
@@ -29,6 +30,8 @@ export default function LandingPage() {
 
       <main>
         <HeroSection onOpenWizard={() => setWizardOpen(true)} />
+
+        <DomainSearchSection onOpenWizard={() => setWizardOpen(true)} />
 
         <ServicesSection />
 

@@ -19,11 +19,13 @@ export const plans: Plan[] = [
     amountZar: 1999,
     description: "Perfect for bloggers and personal brands getting started.",
     features: [
-      "1-page website",
+      "1 year domain included from purchase date",
+      "WordPress setup",
       "Mobile responsive",
       "Basic SEO setup",
       "Contact form",
       "1 month free hosting",
+      "Social media links",
       "Email support",
     ],
     cta: "Get Started",
@@ -36,6 +38,7 @@ export const plans: Plan[] = [
     amountZar: 4999,
     description: "The most popular choice for growing small businesses.",
     features: [
+      "1 year domain included from purchase date",
       "Up to 5 pages",
       "Mobile responsive",
       "SEO optimised",
@@ -53,8 +56,10 @@ export const plans: Plan[] = [
     name: "Pro",
     priceLabel: "R7,999",
     amountZar: 7999,
-    description: "For established businesses that need a full digital presence.",
+    description:
+      "For established businesses that need a full digital presence.",
     features: [
+      "1 year domain included from purchase date",
       "Up to 10 pages",
       "Custom design system",
       "Advanced SEO",

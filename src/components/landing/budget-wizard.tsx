@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Check, X, ChevronRight, ChevronLeft, Sparkles } from "lucide-react";
@@ -33,9 +33,12 @@ interface HostingPlan {
 
 interface DomainOption {
   id: string;
+  extension: string;
   name: string;
   description: string;
   price: number;
+  currency?: string;
+  source?: string;
 }
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
@@ -126,27 +129,31 @@ const HOSTING_PLANS: HostingPlan[] = [
   },
 ];
 
-const DOMAIN_OPTIONS: DomainOption[] = [
-  {
-    id: "org",
-    name: ".org",
-    description: "Strong fit for communities, nonprofits and trust-led brands.",
-    price: 150,
-  },
+const DEFAULT_DOMAIN_OPTIONS: DomainOption[] = [
   {
     id: "coza",
+    extension: ".co.za",
     name: ".co.za",
     description: "Local South African domain for businesses targeting the home market.",
     price: 150,
   },
   {
     id: "com",
+    extension: ".com",
     name: ".com",
     description: "The most recognised global domain for commercial brands.",
     price: 280,
   },
   {
+    id: "org",
+    extension: ".org",
+    name: ".org",
+    description: "Strong fit for communities, nonprofits and trust-led brands.",
+    price: 150,
+  },
+  {
     id: "net",
+    extension: ".net",
     name: ".net",
     description: "Alternative global extension for networked or digital-first brands.",
     price: 360,
@@ -157,6 +164,17 @@ const DOMAIN_OPTIONS: DomainOption[] = [
 
 function formatZAR(amount: number) {
   return `R${amount.toLocaleString("en-ZA")}`;
+}
+
+function normalizeDomainInput(value: string) {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/^https?:\/\//, "")
+    .replace(/^www\./, "")
+    .replace(/\/.*$/, "")
+    .replace(/\..*$/, "")
+    .replace(/[^a-z0-9-]/g, "");
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -335,16 +353,57 @@ function Step3({ selected, onSelect }: { selected: string | null; onSelect: (id:
 
 // ─── Step 4 ───────────────────────────────────────────────────────────────────
 
-function Step4({ selected, onSelect }: { selected: string | null; onSelect: (id: string) => void }) {
+function Step4({
+  selected,
+  onSelect,
+  options,
+  domainName,
+  onDomainNameChange,
+  onCheckAvailability,
+  isCheckingAvailability,
+  availabilityByExtension,
+  statusMessage,
+}: {
+  selected: string | null;
+  onSelect: (id: string) => void;
+  options: DomainOption[];
+  domainName: string;
+  onDomainNameChange: (value: string) => void;
+  onCheckAvailability: () => void;
+  isCheckingAvailability: boolean;
+  availabilityByExtension: Record<string, boolean | null>;
+  statusMessage: string;
+}) {
   return (
     <div className="space-y-4">
       <div>
         <h2 className="text-2xl sm:text-3xl font-bold text-white">Choose a Domain Extension</h2>
         <p className="text-gray-400 text-sm mt-1">Pick the domain you want us to register and configure for your site.</p>
       </div>
+      <div className="rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-5">
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <input
+            type="text"
+            value={domainName}
+            onChange={(event) => onDomainNameChange(event.target.value)}
+            placeholder="yourbrand"
+            className="h-12 flex-1 rounded-xl border border-white/15 bg-white/10 px-4 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:border-white/50"
+          />
+          <Button
+            type="button"
+            onClick={onCheckAvailability}
+            disabled={!normalizeDomainInput(domainName) || isCheckingAvailability}
+            className="h-12 rounded-xl bg-white text-gray-900 hover:bg-gray-100 disabled:bg-white/10 disabled:text-gray-500">
+            {isCheckingAvailability ? "Checking..." : "Check availability"}
+          </Button>
+        </div>
+        <p className="mt-2 text-xs text-gray-500">Search the name once and compare availability across the listed extensions.</p>
+        {statusMessage && <p className="mt-3 text-xs text-gray-400">{statusMessage}</p>}
+      </div>
       <div className="grid gap-3 sm:grid-cols-2 mt-6">
-        {DOMAIN_OPTIONS.map((domain) => {
+        {options.map((domain) => {
           const active = selected === domain.id;
+          const availability = availabilityByExtension[domain.extension];
           return (
             <button
               key={domain.id}
@@ -370,6 +429,28 @@ function Step4({ selected, onSelect }: { selected: string | null; onSelect: (id:
               <p className={cn("text-xs leading-relaxed", active ? "text-gray-600" : "text-gray-400")}>
                 {domain.description}
               </p>
+              <div className="mt-3 flex items-center justify-between gap-3">
+                <span
+                  className={cn(
+                    "rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide",
+                    availability === true
+                      ? active
+                        ? "bg-gray-900 text-white"
+                        : "bg-[#83c406]/15 text-[#dff3ab]"
+                      : availability === false
+                        ? active
+                          ? "bg-gray-200 text-gray-700"
+                          : "bg-white/10 text-gray-300"
+                        : active
+                          ? "bg-gray-200 text-gray-700"
+                          : "bg-white/10 text-gray-400",
+                  )}>
+                  {availability === true ? "Available" : availability === false ? "Taken" : "Not checked"}
+                </span>
+                {domain.source === "hostafrica" && (
+                  <span className={cn("text-[11px]", active ? "text-gray-600" : "text-gray-500")}>Live pricing</span>
+                )}
+              </div>
             </button>
           );
         })}
@@ -385,16 +466,18 @@ function Step5({
   addonIds,
   hostingPlanId,
   domainOptionId,
+  domainOptions,
 }: {
   websiteTypeId: string | null;
   addonIds: string[];
   hostingPlanId: string | null;
   domainOptionId: string | null;
+  domainOptions: DomainOption[];
 }) {
   const website = WEBSITE_TYPES.find((w) => w.id === websiteTypeId);
   const addons = ADDONS.filter((a) => addonIds.includes(a.id));
   const hosting = HOSTING_PLANS.find((h) => h.id === hostingPlanId);
-  const domain = DOMAIN_OPTIONS.find((d) => d.id === domainOptionId);
+  const domain = domainOptions.find((d) => d.id === domainOptionId);
 
   const onceOff = (website?.price ?? 0) + addons.filter((a) => !a.monthly).reduce((s, a) => s + a.price, 0);
   const monthly = (hosting?.price ?? 0) + addons.filter((a) => a.monthly).reduce((s, a) => s + a.price, 0);
@@ -595,16 +678,18 @@ function StickyPriceBar({
   addonIds,
   hostingPlanId,
   domainOptionId,
+  domainOptions,
 }: {
   websiteTypeId: string | null;
   addonIds: string[];
   hostingPlanId: string | null;
   domainOptionId: string | null;
+  domainOptions: DomainOption[];
 }) {
   const website = WEBSITE_TYPES.find((w) => w.id === websiteTypeId);
   const addons = ADDONS.filter((a) => addonIds.includes(a.id));
   const hosting = HOSTING_PLANS.find((h) => h.id === hostingPlanId);
-  const domain = DOMAIN_OPTIONS.find((d) => d.id === domainOptionId);
+  const domain = domainOptions.find((d) => d.id === domainOptionId);
 
   const onceOff = (website?.price ?? 0) + addons.filter((a) => !a.monthly).reduce((s, a) => s + a.price, 0);
   const monthly = (hosting?.price ?? 0) + addons.filter((a) => a.monthly).reduce((s, a) => s + a.price, 0);
@@ -651,6 +736,11 @@ export function BudgetWizard({ open, onClose }: BudgetWizardProps) {
   const [addonIds, setAddonIds] = useState<string[]>([]);
   const [hostingPlanId, setHostingPlanId] = useState<string | null>(null);
   const [domainOptionId, setDomainOptionId] = useState<string | null>(null);
+  const [domainOptions, setDomainOptions] = useState<DomainOption[]>(DEFAULT_DOMAIN_OPTIONS);
+  const [domainName, setDomainName] = useState("");
+  const [domainStatusMessage, setDomainStatusMessage] = useState("");
+  const [availabilityByExtension, setAvailabilityByExtension] = useState<Record<string, boolean | null>>({});
+  const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
 
   const TOTAL_STEPS = 5;
 
@@ -664,6 +754,111 @@ export function BudgetWizard({ open, onClose }: BudgetWizardProps) {
   const toggleAddon = (id: string) =>
     setAddonIds((prev) => (prev.includes(id) ? prev.filter((a) => a !== id) : [...prev, id]));
 
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    let cancelled = false;
+
+    async function loadDomainOptions() {
+      try {
+        const response = await apiFetch("/api/domains/extensions");
+        const payload = (await response.json().catch(() => null)) as
+          | { options?: DomainOption[]; source?: string; warning?: string; configured?: boolean; message?: string }
+          | null;
+
+        if (!response.ok) {
+          throw new Error(payload?.message || "We could not load domain pricing right now.");
+        }
+
+        if (cancelled) {
+          return;
+        }
+
+        const options = Array.isArray(payload?.options) && payload.options.length > 0 ? payload.options : DEFAULT_DOMAIN_OPTIONS;
+        setDomainOptions(options);
+        setDomainOptionId((current) => (current && options.some((option) => option.id === current) ? current : null));
+
+        if (payload?.source === "hostafrica") {
+          setDomainStatusMessage("Live reseller pricing loaded.");
+          return;
+        }
+
+        if (payload?.warning) {
+          setDomainStatusMessage(`${payload.warning} Showing fallback pricing for now.`);
+          return;
+        }
+
+        if (payload?.configured === false) {
+          setDomainStatusMessage("Reseller credentials are not configured yet. Showing fallback pricing for now.");
+          return;
+        }
+
+        setDomainStatusMessage("Showing default domain pricing for now.");
+      } catch (error) {
+        if (!cancelled) {
+          setDomainOptions(DEFAULT_DOMAIN_OPTIONS);
+          setDomainStatusMessage(error instanceof Error ? error.message : "We could not load domain pricing right now.");
+        }
+      }
+    }
+
+    loadDomainOptions();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [open]);
+
+  const handleCheckAvailability = async () => {
+    const normalizedName = normalizeDomainInput(domainName);
+
+    if (!normalizedName) {
+      setDomainStatusMessage("Enter a domain name first, for example yourbrand.");
+      return;
+    }
+
+    setIsCheckingAvailability(true);
+    setDomainStatusMessage("Checking live domain availability...");
+
+    try {
+      const response = await apiFetch("/api/domains/lookup", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: normalizedName,
+          extensions: domainOptions.map((option) => option.extension),
+        }),
+      });
+
+      const payload = (await response.json().catch(() => null)) as
+        | { results?: Array<{ domain: string; available: boolean | null }>; message?: string }
+        | null;
+
+      if (!response.ok) {
+        throw new Error(payload?.message || "We could not check domain availability right now.");
+      }
+
+      const nextAvailability = Object.fromEntries(
+        domainOptions.map((option) => {
+          const fullDomain = `${normalizedName}${option.extension}`.toLowerCase();
+          const match = payload?.results?.find((result) => result.domain.toLowerCase() === fullDomain);
+          return [option.extension, match?.available ?? null];
+        }),
+      );
+
+      setAvailabilityByExtension(nextAvailability);
+      setDomainStatusMessage(`Availability updated for ${normalizedName}.`);
+    } catch (error) {
+      setDomainStatusMessage(error instanceof Error ? error.message : "We could not check domain availability right now.");
+    } finally {
+      setIsCheckingAvailability(false);
+    }
+  };
+
   const handleClose = () => {
     onClose();
     // reset after close animation
@@ -673,6 +868,11 @@ export function BudgetWizard({ open, onClose }: BudgetWizardProps) {
       setAddonIds([]);
       setHostingPlanId(null);
       setDomainOptionId(null);
+      setDomainOptions(DEFAULT_DOMAIN_OPTIONS);
+      setDomainName("");
+      setDomainStatusMessage("");
+      setAvailabilityByExtension({});
+      setIsCheckingAvailability(false);
     }, 300);
   };
 
@@ -703,13 +903,26 @@ export function BudgetWizard({ open, onClose }: BudgetWizardProps) {
           {step === 0 && <Step1 selected={websiteTypeId} onSelect={setWebsiteTypeId} />}
           {step === 1 && <Step2 selected={addonIds} onToggle={toggleAddon} />}
           {step === 2 && <Step3 selected={hostingPlanId} onSelect={setHostingPlanId} />}
-          {step === 3 && <Step4 selected={domainOptionId} onSelect={setDomainOptionId} />}
+          {step === 3 && (
+            <Step4
+              selected={domainOptionId}
+              onSelect={setDomainOptionId}
+              options={domainOptions}
+              domainName={domainName}
+              onDomainNameChange={setDomainName}
+              onCheckAvailability={handleCheckAvailability}
+              isCheckingAvailability={isCheckingAvailability}
+              availabilityByExtension={availabilityByExtension}
+              statusMessage={domainStatusMessage}
+            />
+          )}
           {step === 4 && (
             <Step5
               websiteTypeId={websiteTypeId}
               addonIds={addonIds}
               hostingPlanId={hostingPlanId}
               domainOptionId={domainOptionId}
+              domainOptions={domainOptions}
             />
           )}
         </div>
@@ -744,6 +957,7 @@ export function BudgetWizard({ open, onClose }: BudgetWizardProps) {
           addonIds={addonIds}
           hostingPlanId={hostingPlanId}
           domainOptionId={domainOptionId}
+          domainOptions={domainOptions}
         />
       </DialogContent>
     </Dialog>

@@ -15,6 +15,10 @@ type VerificationPayload = {
   companyName?: string;
   planName?: string;
   paymentStatus?: string;
+  selectedDomain?: string;
+  domainAutoRenewAt?: string;
+  domainFulfillmentStatus?: string;
+  domainFulfillmentNotes?: string;
 };
 
 export default function PaymentSuccessPage() {
@@ -132,7 +136,22 @@ export default function PaymentSuccessPage() {
                 <p>Email: {payload?.email ?? "Your account email"}</p>
                 <p>Company: {payload?.companyName ?? "Your company"}</p>
                 <p>Status: {payload?.paymentStatus ?? "success"}</p>
+                <p>Domain: {payload?.selectedDomain ?? "Included domain selection"}</p>
+                <p>
+                  Auto renews:{" "}
+                  {payload?.domainAutoRenewAt
+                    ? new Date(payload.domainAutoRenewAt).toLocaleDateString("en-ZA", {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      })
+                    : "1 year after purchase date"}
+                </p>
+                <p>Fulfillment: {payload?.domainFulfillmentStatus ?? "Queued after payment"}</p>
               </div>
+              {payload?.domainFulfillmentNotes && (
+                <p className="text-sm text-gray-300">{payload.domainFulfillmentNotes}</p>
+              )}
             </div>
           )}
 

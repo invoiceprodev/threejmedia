@@ -30,6 +30,31 @@ function getCorsHeaders(origin, allowedOrigin) {
   };
 }
 
+function addYearsIsoDate(value, years) {
+  const next = new Date(value);
+  next.setUTCFullYear(next.getUTCFullYear() + years);
+  return next.toISOString();
+}
+
+function getFulfillmentUpdate(paymentStatus) {
+  if (paymentStatus === "success") {
+    return {
+      domain_fulfillment_status: "queued",
+      domain_fulfillment_notes:
+        "Plan payment verified. Domain is now queued for managed registration and configuration.",
+      domain_fulfillment_requested_at: new Date().toISOString(),
+      domain_fulfillment_completed_at: null,
+    };
+  }
+
+  return {
+    domain_fulfillment_status: "awaiting_payment",
+    domain_fulfillment_notes: `Payment status is ${paymentStatus}. Domain fulfillment has not started.`,
+    domain_fulfillment_requested_at: null,
+    domain_fulfillment_completed_at: null,
+  };
+}
+
 async function updateSignupRecord({ supabaseUrl, serviceRoleKey, table, paymentReference, update }) {
   const response = await fetch(
     `${supabaseUrl}/rest/v1/${table}?payment_reference=eq.${encodeURIComponent(paymentReference)}`,
@@ -101,6 +126,12 @@ export async function handlePaystackVerifyRequest(request, response, options) {
     const transaction = verifyPayload.data;
     const paymentStatus = String(transaction.status || "unknown");
     const metadata = transaction.metadata || {};
+    const paidAt = transaction.paid_at || transaction.paidAt || new Date().toISOString();
+    const registrationYears = Number(metadata.domain_registration_years || 1);
+    const domainRegistrationStartsAt = paymentStatus === "success" ? new Date(paidAt).toISOString() : null;
+    const domainAutoRenewAt =
+      paymentStatus === "success" ? addYearsIsoDate(domainRegistrationStartsAt, registrationYears) : null;
+    const fulfillmentUpdate = getFulfillmentUpdate(paymentStatus);
 
     const signup = await updateSignupRecord({
       supabaseUrl,
@@ -110,6 +141,9 @@ export async function handlePaystackVerifyRequest(request, response, options) {
       update: {
         payment_status: paymentStatus,
         auth0_user_id: metadata.auth0_user_id || null,
+        domain_registration_starts_at: domainRegistrationStartsAt,
+        domain_auto_renew_at: domainAutoRenewAt,
+        ...fulfillmentUpdate,
       },
     });
 
@@ -123,6 +157,10 @@ export async function handlePaystackVerifyRequest(request, response, options) {
         fullName: signup?.client_full_name || null,
         companyName: signup?.company_name || null,
         planName: signup?.plan_name || metadata?.plan_id || null,
+        selectedDomain: signup?.selected_domain_full || metadata?.selected_domain_full || null,
+        domainAutoRenewAt: signup?.domain_auto_renew_at || domainAutoRenewAt,
+        domainFulfillmentStatus: signup?.domain_fulfillment_status || fulfillmentUpdate.domain_fulfillment_status,
+        domainFulfillmentNotes: signup?.domain_fulfillment_notes || fulfillmentUpdate.domain_fulfillment_notes,
       },
       corsHeaders,
     );

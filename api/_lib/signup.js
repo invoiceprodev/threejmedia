@@ -20,6 +20,34 @@ const planCatalog = {
   },
 };
 
+const supportedDomainExtensions = new Set([".co.za", ".com", ".org", ".net"]);
+
+function normalizeDomainLabel(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/^https?:\/\//, "")
+    .replace(/^www\./, "")
+    .replace(/\/.*$/, "")
+    .replace(/[^a-z0-9-]/g, "");
+}
+
+function normalizeDomainSelection(domainName, domainExtension) {
+  const name = normalizeDomainLabel(domainName).replace(/\..*$/, "");
+  const extension = String(domainExtension || "").trim().toLowerCase();
+
+  if (!name || !extension || !supportedDomainExtensions.has(extension)) {
+    throw new Error("Please choose a valid domain name and extension.");
+  }
+
+  return {
+    name,
+    extension,
+    full: `${name}${extension}`,
+    years: 1,
+  };
+}
+
 function maskEmailForLog(email) {
   const normalized = String(email || "").trim().toLowerCase();
 
@@ -192,6 +220,15 @@ async function initializePaystackTransaction({
             variable_name: "selected_plan",
             value: plan.name,
           },
+          ...(metadata?.selected_domain_full
+            ? [
+                {
+                  display_name: "Selected Domain",
+                  variable_name: "selected_domain_full",
+                  value: metadata.selected_domain_full,
+                },
+              ]
+            : []),
         ],
         ...metadata,
       },
@@ -227,7 +264,7 @@ async function fetchLatestPendingSignup({ supabaseUrl, serviceRoleKey, table, em
   }
 
   const response = await fetch(
-    `${supabaseUrl}/rest/v1/${table}?select=signup_reference,company_name,client_full_name,email,plan_id,plan_name,amount_zar,auth0_user_id,payment_status,created_at&payment_status=eq.pending_verification&or=(${filters.join(",")})&order=created_at.desc&limit=1`,
+    `${supabaseUrl}/rest/v1/${table}?select=signup_reference,company_name,client_full_name,email,plan_id,plan_name,amount_zar,selected_domain_name,selected_domain_extension,selected_domain_full,domain_registration_years,domain_registration_starts_at,domain_auto_renew_at,domain_fulfillment_status,domain_fulfillment_notes,domain_fulfillment_requested_at,domain_fulfillment_completed_at,auth0_user_id,payment_status,created_at&payment_status=eq.pending_verification&or=(${filters.join(",")})&order=created_at.desc&limit=1`,
     {
       headers: {
         apikey: serviceRoleKey,
@@ -374,9 +411,21 @@ export async function handleSignupRequest(request, response, options) {
   const password = String(payload?.password ?? "");
   const planId = String(payload?.planId ?? "").trim();
   const plan = planCatalog[planId];
+  let selectedDomain;
 
   if (!companyName || !fullName || !email || !password || !plan) {
     return json(response, 400, { message: "Company, client details, password, and plan are required." }, corsHeaders);
+  }
+
+  try {
+    selectedDomain = normalizeDomainSelection(payload?.domainName, payload?.domainExtension);
+  } catch (error) {
+    return json(
+      response,
+      400,
+      { message: error instanceof Error ? error.message : "Please choose a valid domain." },
+      corsHeaders,
+    );
   }
 
   if (!emailPattern.test(email)) {
@@ -415,6 +464,16 @@ export async function handleSignupRequest(request, response, options) {
         plan_id: plan.id,
         plan_name: plan.name,
         amount_zar: plan.amountZar,
+        selected_domain_name: selectedDomain.name,
+        selected_domain_extension: selectedDomain.extension,
+        selected_domain_full: selectedDomain.full,
+        domain_registration_years: selectedDomain.years,
+        domain_registration_starts_at: null,
+        domain_auto_renew_at: null,
+        domain_fulfillment_status: "awaiting_payment",
+        domain_fulfillment_notes: "Waiting for successful plan payment before domain fulfillment can start.",
+        domain_fulfillment_requested_at: null,
+        domain_fulfillment_completed_at: null,
         auth0_user_id: auth0User?._id || auth0User?.user_id || null,
         payment_reference: null,
         payment_status: "pending_verification",
@@ -530,6 +589,7 @@ export async function handleSignupContinueRequest(request, response, options) {
         auth0_email: pendingSignup.email || identity.email,
         auth0_user_id: pendingSignup.auth0_user_id || identity.auth0UserId,
         plan_id: plan.id,
+        selected_domain_full: pendingSignup.selected_domain_full || null,
       },
     });
 

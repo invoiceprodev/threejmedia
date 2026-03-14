@@ -4,6 +4,15 @@
 
 A modern, premium, conversion-focused landing page for a South African web design and hosting agency serving startups, bloggers, influencers and small businesses. The design is minimal, mobile-first and built to convert visitors into clients.
 
+## Current Implementation Notes
+
+- HostAfrica reseller integration is now wired for live TLD pricing, domain lookup, registration, and transfer flows.
+- Landing page includes a customer-facing domain search section backed by the reseller API.
+- Domain order dialog supports dry-run validation before any live HostAfrica order is submitted.
+- Follow-up UI task: revisit the domain order dialog width and input layout on desktop, as the popup still feels too narrow for comfortable entry on some screen sizes.
+- Follow-up backend task for tomorrow: debug `POST /api/domain-fulfillment/submit` on Railway. Current `curl` request shape is correct, but `https://api.threejmedia.co.za/api/domain-fulfillment/submit` returned `502 Application failed to respond` during deployment/runtime verification.
+- Tomorrow checks: confirm Railway deploy completed, verify `/health`, verify `DOMAIN_FULFILLMENT_ADMIN_TOKEN` is present in Railway, inspect Railway logs for the fulfillment submit route, then retry the dry run with `uifmasters.co.za`.
+
 <phase number="1" title="Core Landing Page – Hero, Services, Pricing & Footer">
 
 Deliver a fully functional landing page skeleton with the most conversion-critical sections so the brand and offer are immediately clear.

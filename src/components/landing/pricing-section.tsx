@@ -104,8 +104,8 @@ export function PricingSection({ onSelectPlan }: PricingSectionProps) {
 
                   {/* Features */}
                   <ul className="flex flex-col gap-3 flex-1">
-                    {features.map((feature) => (
-                      <li key={feature} className="flex items-start gap-3">
+                    {features.map((feature, featureIndex) => (
+                      <li key={`${id}-${featureIndex}`} className="flex items-start gap-3">
                         <div
                           className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
                             popular ? "bg-white/15" : "bg-gray-100"

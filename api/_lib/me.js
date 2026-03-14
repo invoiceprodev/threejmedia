@@ -48,7 +48,7 @@ async function fetchLatestSignup({ supabaseUrl, serviceRoleKey, table, email, au
   }
 
   const response = await fetch(
-    `${supabaseUrl}/rest/v1/${table}?select=company_name,plan_name,payment_status,payment_reference,created_at,email&or=(${filters.join(",")})&order=created_at.desc&limit=1`,
+    `${supabaseUrl}/rest/v1/${table}?select=company_name,plan_name,payment_status,payment_reference,selected_domain_full,domain_auto_renew_at,domain_fulfillment_status,domain_fulfillment_notes,created_at,email&or=(${filters.join(",")})&order=created_at.desc&limit=1`,
     {
       headers: {
         apikey: serviceRoleKey,
@@ -132,6 +132,10 @@ export async function handleMeRequest(request, response, options) {
               planName: latestSignup.plan_name,
               paymentStatus: latestSignup.payment_status,
               paymentReference: latestSignup.payment_reference,
+              selectedDomain: latestSignup.selected_domain_full,
+              domainAutoRenewAt: latestSignup.domain_auto_renew_at,
+              domainFulfillmentStatus: latestSignup.domain_fulfillment_status,
+              domainFulfillmentNotes: latestSignup.domain_fulfillment_notes,
               createdAt: latestSignup.created_at,
             }
           : null,

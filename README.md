@@ -37,6 +37,7 @@ Database: Supabase Postgres
 | `RESEND_API_KEY` | Railway / server | Resend API key used for transactional emails |
 | `RESEND_FROM_EMAIL` | Railway / server | Verified sender email used for quote confirmation emails |
 | `RESEND_BUDGET_QUOTES_TO` | Railway / server | Comma-separated internal recipients for budget quote notifications |
+| `DOMAIN_FULFILLMENT_ADMIN_TOKEN` | Railway / server | Shared secret required for the internal endpoint that submits stored onboarding details to HostAfrica |
 | `PORT` | Railway / server | Port used by the Railway API locally and in deployment |
 
 3. In Supabase SQL Editor, run [`supabase/newsletter_subscribers.sql`](/Users/jerry/Desktop/threejmedia.co.za/supabase/newsletter_subscribers.sql), [`supabase/client_signups.sql`](/Users/jerry/Desktop/threejmedia.co.za/supabase/client_signups.sql), and [`supabase/budget_quote_requests.sql`](/Users/jerry/Desktop/threejmedia.co.za/supabase/budget_quote_requests.sql).
@@ -67,6 +68,7 @@ Database: Supabase Postgres
    - `RESEND_API_KEY`
    - `RESEND_FROM_EMAIL`
    - `RESEND_BUDGET_QUOTES_TO`
+   - `DOMAIN_FULFILLMENT_ADMIN_TOKEN`
    - `PORT`
 4. Set `ALLOWED_ORIGIN` to your deployed frontend URL, for example `https://threejmedia.co.za`.
 
@@ -103,5 +105,12 @@ Use a SPA application for the frontend login flow and a regular Auth0 API identi
 - `POST /api/signup/continue`
 - `GET /api/paystack/verify`
 - `GET /api/me`
+- `POST /api/domain-fulfillment/onboarding`
+- `POST /api/domain-fulfillment/submit`
 
 The newsletter form now posts to `VITE_API_BASE_URL/api/newsletter` and stores subscribers in Supabase. The budget CTA posts to `VITE_API_BASE_URL/api/budget-quote` and stores custom quote requests in Supabase. Pricing signups now post to `VITE_API_BASE_URL/api/signup`, create an Auth0 user, and store the signup in a pending verification state. After the client confirms their email address, the app calls `POST /api/signup/continue` to initialize Paystack checkout. After Paystack returns, `/payment/success` verifies the transaction and the protected `/dashboard` uses Auth0 access tokens against `GET /api/me`.
+
+For managed domain fulfillment:
+- the customer submits registrant and nameserver details through `POST /api/domain-fulfillment/onboarding`
+- an internal operator can then call `POST /api/domain-fulfillment/submit` with `X-Admin-Token: <DOMAIN_FULFILLMENT_ADMIN_TOKEN>`
+- use `{"dryRun": true, "signupReference": "<uuid>"}` first, or replace `signupReference` with `domain`, to validate the stored payload before making a live HostAfrica submission
