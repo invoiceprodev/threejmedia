@@ -20,6 +20,18 @@ const planCatalog = {
   },
 };
 
+function maskEmailForLog(email) {
+  const normalized = String(email || "").trim().toLowerCase();
+
+  if (!normalized.includes("@")) {
+    return "";
+  }
+
+  const [localPart, domain] = normalized.split("@");
+  const visibleLocal = localPart.slice(0, 2);
+  return `${visibleLocal}${"*".repeat(Math.max(localPart.length - visibleLocal.length, 1))}@${domain}`;
+}
+
 function json(response, status, payload, extraHeaders = {}) {
   response.writeHead(status, {
     "Content-Type": "application/json",
@@ -285,18 +297,17 @@ async function insertSignupRecord({
   }
 }
 
-function getVerifiedIdentity({ auth0User, submittedIdentity }) {
+function getVerifiedIdentity({ auth0User, auth0Identity }) {
   const auth0UserId = typeof auth0User?.sub === "string" ? auth0User.sub : "";
+  const identityUserId = typeof auth0Identity?.sub === "string" ? auth0Identity.sub : "";
+  const email = typeof auth0Identity?.email === "string" ? auth0Identity.email.trim().toLowerCase() : "";
+  const emailVerified = auth0Identity?.email_verified === true;
 
-  if (!auth0UserId) {
+  if (!auth0UserId || !identityUserId) {
     throw new Error("Your Auth0 session does not include a valid user identifier.");
   }
 
-  const submittedUserId = String(submittedIdentity?.auth0UserId ?? "").trim();
-  const email = String(submittedIdentity?.email ?? "").trim().toLowerCase();
-  const emailVerified = submittedIdentity?.emailVerified === true;
-
-  if (submittedUserId !== auth0UserId) {
+  if (identityUserId !== auth0UserId) {
     throw new Error("Your sign-in details could not be verified. Please sign in again.");
   }
 
@@ -428,7 +439,7 @@ export async function handleSignupRequest(request, response, options) {
     console.error("[signup] request failed", {
       step: failedStep,
       signupReference,
-      email,
+      email: maskEmailForLog(email),
       planId,
       message,
     });
@@ -450,6 +461,7 @@ export async function handleSignupContinueRequest(request, response, options) {
     allowedOrigin = "",
     auth0Domain,
     auth0Audience,
+    auth0ClientId,
     paystackSecretKey,
     paystackCallbackUrl,
     supabaseUrl,
@@ -463,7 +475,7 @@ export async function handleSignupContinueRequest(request, response, options) {
   if (request.method === "OPTIONS") {
     return json(response, 204, {}, {
       ...corsHeaders,
-      "Access-Control-Allow-Headers": "Content-Type, Authorization",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Auth0-Id-Token",
       "Access-Control-Allow-Methods": "POST, OPTIONS",
     });
   }
@@ -480,12 +492,13 @@ export async function handleSignupContinueRequest(request, response, options) {
   }
 
   try {
-    const submittedIdentity = await parseJsonBody(request);
-    const { requireAuth0User } = await import("./auth.js");
+    await parseJsonBody(request);
+    const { requireAuth0IdToken, requireAuth0User } = await import("./auth.js");
     const user = await requireAuth0User(request, { auth0Domain, auth0Audience });
+    const identityClaims = await requireAuth0IdToken(request, { auth0Domain, auth0ClientId });
     const identity = getVerifiedIdentity({
       auth0User: user,
-      submittedIdentity,
+      auth0Identity: identityClaims,
     });
     const pendingSignup = await fetchLatestPendingSignup({
       supabaseUrl,

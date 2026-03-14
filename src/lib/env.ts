@@ -5,10 +5,22 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY?.trim();
 const auth0Domain = import.meta.env.VITE_AUTH0_DOMAIN?.trim();
 const auth0ClientId = import.meta.env.VITE_AUTH0_CLIENT_ID?.trim();
 const auth0Audience = import.meta.env.VITE_AUTH0_AUDIENCE?.trim();
+const imageBaseUrl = import.meta.env.VITE_IMAGE_BASE_URL?.trim();
+const cloudinaryCloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME?.trim();
+const cloudinaryFolder = import.meta.env.VITE_CLOUDINARY_FOLDER?.trim();
+
+function normalizePathSegment(value: string | undefined) {
+  return value ? value.replace(/^\/+|\/+$/g, "") : "";
+}
 
 export const env = {
   apiBaseUrl: apiBaseUrl ? apiBaseUrl.replace(/\/$/, "") : "",
   apiFallbackBaseUrl: apiFallbackBaseUrl ? apiFallbackBaseUrl.replace(/\/$/, "") : "",
+  imageBaseUrl: imageBaseUrl ? imageBaseUrl.replace(/\/$/, "") : "",
+  cloudinary: {
+    cloudName: cloudinaryCloudName ?? "",
+    folder: normalizePathSegment(cloudinaryFolder),
+  },
   supabase: {
     url: supabaseUrl ?? "",
     anonKey: supabaseAnonKey ?? "",

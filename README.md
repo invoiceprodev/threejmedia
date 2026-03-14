@@ -13,6 +13,9 @@ Database: Supabase Postgres
 | --- | --- | --- |
 | `VITE_API_BASE_URL` | Vercel / frontend | Primary base URL for the API, for example `https://api.threejmedia.co.za` in production. Leave it blank locally to use the Vite proxy |
 | `VITE_API_FALLBACK_BASE_URL` | Vercel / frontend | Optional fallback API URL, for example `https://threejmedia-production.up.railway.app` while the custom domain is settling |
+| `VITE_IMAGE_BASE_URL` | Vercel / frontend | Optional manual base URL for externally hosted frontend images, for example `https://cdn.example.com/threejmedia` |
+| `VITE_CLOUDINARY_CLOUD_NAME` | Vercel / frontend | Cloudinary cloud name used to build hosted marketing image URLs automatically |
+| `VITE_CLOUDINARY_FOLDER` | Vercel / frontend | Optional Cloudinary folder that contains the marketing images |
 | `VITE_SUPABASE_URL` | Vercel / frontend | Public Supabase project URL for client-side usage |
 | `VITE_SUPABASE_ANON_KEY` | Vercel / frontend | Public Supabase anon key for browser-safe access |
 | `VITE_AUTH0_DOMAIN` | Vercel / frontend | Auth0 domain for future login flows |
@@ -25,7 +28,7 @@ Database: Supabase Postgres
 | `SUPABASE_BUDGET_QUOTES_TABLE` | Railway / server | Supabase table name for budget CTA quote requests |
 | `ALLOWED_ORIGIN` | Railway / server | Frontend origins allowed to call the API. Use a comma-separated list such as `http://localhost:5173,https://threejmedia.co.za` |
 | `AUTH0_DOMAIN` | Railway / server | Auth0 tenant domain used for database-connection signup |
-| `AUTH0_CLIENT_ID` | Railway / server | Auth0 application client ID used for signup |
+| `AUTH0_CLIENT_ID` | Railway / server | Auth0 application client ID used for signup and server-side ID token verification |
 | `AUTH0_CONNECTION` | Railway / server | Auth0 database connection name |
 | `AUTH0_AUDIENCE` | Railway / server | Auth0 API audience expected by protected Railway endpoints |
 | `PAYSTACK_PUBLIC_KEY` | Railway / server | Paystack public key for future frontend payment tooling |
@@ -41,6 +44,8 @@ Database: Supabase Postgres
 5. Or run them separately with `npm run dev` and `npm run dev:api`.
 6. `npm run dev:all` starts the API without watch mode so it stays stable on machines with low file watcher limits.
 7. For local frontend testing, leave `VITE_API_BASE_URL` empty so Vite proxies `/api/*` and `/health` to `http://localhost:3001` without browser CORS issues.
+8. To serve marketing images from Cloudinary, upload the files with their current names such as `threejmedia_logo.png` and `portfolio-1.png`, then set `VITE_CLOUDINARY_CLOUD_NAME` and optionally `VITE_CLOUDINARY_FOLDER`.
+9. If you prefer another CDN or storage provider, set `VITE_IMAGE_BASE_URL` to that folder URL instead. If both are blank, the app falls back to the bundled local images.
 
 ## Railway setup
 
@@ -79,6 +84,14 @@ Use a SPA application for the frontend login flow and a regular Auth0 API identi
   - `https://threejmedia.co.za`
 - `AUTH0_CONNECTION` should match your Auth0 database connection name
 - `AUTH0_AUDIENCE` and `VITE_AUTH0_AUDIENCE` should match your Auth0 API Identifier
+- `AUTH0_CLIENT_ID` on Railway should match the SPA application client ID used by the frontend so the API can verify Auth0 ID tokens safely
+
+## Security notes
+
+- Protected API routes verify the Auth0 access token for API access and the Auth0 ID token for identity claims like `sub`, `email`, and `email_verified`
+- The API no longer trusts browser-submitted email addresses, verification flags, or user IDs for signup continuation or dashboard lookup
+- Keep `SUPABASE_SERVICE_ROLE_KEY`, `PAYSTACK_SECRET_KEY`, and `RESEND_API_KEY` only on Railway or local server env files, never in Vercel browser env vars
+- For local frontend testing, leave `VITE_API_BASE_URL` empty so the Vite proxy handles `/api/*` and avoids unnecessary CORS exposure
 
 ## Current API routes
 

@@ -20,7 +20,7 @@ type DashboardPayload = {
 };
 
 export default function DashboardPage() {
-  const { isAuthenticated, isLoading, loginWithRedirect, logout, getAccessTokenSilently, user } = useAuth0();
+  const { isAuthenticated, isLoading, loginWithRedirect, logout, getAccessTokenSilently, getIdTokenClaims, user } = useAuth0();
   const [profile, setProfile] = useState<DashboardPayload | null>(null);
   const [status, setStatus] = useState<"idle" | "loading" | "error">("idle");
   const [message, setMessage] = useState("");
@@ -44,11 +44,17 @@ export default function DashboardPage() {
 
       try {
         const accessToken = await getAccessTokenSilently();
+        const idTokenClaims = await getIdTokenClaims();
+        const idToken = typeof idTokenClaims?.__raw === "string" ? idTokenClaims.__raw : "";
+
+        if (!idToken) {
+          throw new Error("We could not verify your sign-in details. Please sign in again.");
+        }
+
         const response = await apiFetch("/api/me", {
           headers: {
             Authorization: `Bearer ${accessToken}`,
-            "X-Auth0-User-Id": user?.sub ?? "",
-            "X-User-Email": user?.email ?? "",
+            "X-Auth0-Id-Token": idToken,
           },
           signal: controller.signal,
         });
@@ -73,7 +79,7 @@ export default function DashboardPage() {
     })();
 
     return () => controller.abort();
-  }, [getAccessTokenSilently, isAuthenticated, isLoading, user?.email, user?.sub]);
+  }, [getAccessTokenSilently, getIdTokenClaims, isAuthenticated, isLoading, user?.email, user?.sub]);
 
   if (!hasAuth0BrowserEnv) {
     return <DashboardNotice title="Sign-in not configured" message="Add the browser sign-in variables to continue." />;

@@ -1,40 +1,36 @@
 import { useScrollAnimation } from "@/hooks/use-scroll-animation";
-import portfolioOne from "../../../images/portfolio-1.png";
-import portfolioTwo from "../../../images/portfolio-2.png";
-import portfolioThree from "../../../images/portfolio-3.png";
-import portfolioFour from "../../../images/portfolio-4.png";
-import portfolioFive from "../../../images/portfolio-5.png";
+import { imageAssets } from "@/lib/images";
 
 const portfolioItems = [
   {
     id: 1,
-    name: "Bloom Boutique",
-    category: "E-commerce",
-    image: portfolioOne,
+    name: "MHK Group",
+    category: "Corporate Identity",
+    image: imageAssets.portfolioOne,
   },
   {
     id: 2,
     name: "FinTech Launch",
-    category: "Landing Page",
-    image: portfolioTwo,
+    category: "Marketing Assets",
+    image: imageAssets.portfolioTwo,
   },
   {
     id: 3,
-    name: "The Daily Brew",
+    name: "ThreeJ Media Blog",
     category: "Blog",
-    image: portfolioThree,
+    image: imageAssets.portfolioThree,
   },
   {
     id: 4,
-    name: "Apex Consulting",
+    name: "ThreeJ Media Portfolio",
     category: "Business Site",
-    image: portfolioFour,
+    image: imageAssets.portfolioFour,
   },
   {
     id: 5,
-    name: "StyleDrop SA",
+    name: "ThreeJ Media E-commerce",
     category: "E-commerce",
-    image: portfolioFive,
+    image: imageAssets.portfolioFive,
   },
 ];
 
@@ -42,7 +38,10 @@ const [leftTop, leftBottom, centerItem, rightTop, rightBottom] = portfolioItems;
 
 export function PortfolioSection() {
   const heading = useScrollAnimation();
-  const cards = useScrollAnimation({ threshold: 0.05, rootMargin: "0px 0px -40px 0px" });
+  const cards = useScrollAnimation({
+    threshold: 0.05,
+    rootMargin: "0px 0px -40px 0px",
+  });
 
   return (
     <section id="portfolio" className="py-16 md:py-24 bg-white">
@@ -51,8 +50,11 @@ export function PortfolioSection() {
         <div
           ref={heading.ref as React.RefObject<HTMLDivElement>}
           className={`text-center mb-10 md:mb-14 transition-all duration-500 ease-out ${
-            heading.isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-5"
-          }`}>
+            heading.isVisible
+              ? "opacity-100 translate-y-0"
+              : "opacity-0 translate-y-5"
+          }`}
+        >
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-gray-200 bg-gray-100 text-gray-600 text-xs font-semibold tracking-widest uppercase mb-4 select-none">
             Portfolio
           </div>
@@ -60,7 +62,8 @@ export function PortfolioSection() {
             Our Work
           </h2>
           <p className="text-base sm:text-lg text-gray-500 max-w-xl mx-auto leading-relaxed">
-            Websites we've built that drive real results — from personal brands to growing businesses.
+            Websites we've built that drive real results — from personal brands
+            to growing businesses.
           </p>
         </div>
       </div>
@@ -68,12 +71,20 @@ export function PortfolioSection() {
       <div
         ref={cards.ref as React.RefObject<HTMLDivElement>}
         className={`w-full transition-all duration-500 ease-out ${
-          cards.isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-5"
-        }`}>
+          cards.isVisible
+            ? "opacity-100 translate-y-0"
+            : "opacity-0 translate-y-5"
+        }`}
+      >
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[1.1fr_0.8fr_1.1fr]">
           <div className="grid grid-rows-2">
             {[leftTop, leftBottom].map((item, index) => (
-              <PortfolioPanel key={item.id} item={item} delay={index} landscape />
+              <PortfolioPanel
+                key={item.id}
+                item={item}
+                delay={index}
+                landscape
+              />
             ))}
           </div>
 
@@ -81,7 +92,12 @@ export function PortfolioSection() {
 
           <div className="grid grid-rows-2">
             {[rightTop, rightBottom].map((item, index) => (
-              <PortfolioPanel key={item.id} item={item} delay={index + 3} landscape />
+              <PortfolioPanel
+                key={item.id}
+                item={item}
+                delay={index + 3}
+                landscape
+              />
             ))}
           </div>
         </div>
@@ -109,7 +125,8 @@ function PortfolioPanel({
         min-h-[260px] md:min-h-[320px]
         ${landscape ? "lg:min-h-[270px]" : ""}
         ${center ? "lg:min-h-[540px]" : ""}
-      `}>
+      `}
+    >
       <img
         src={item.image}
         alt={item.name}
@@ -121,13 +138,16 @@ function PortfolioPanel({
       <div className="absolute inset-0 flex flex-col justify-end p-5 sm:p-6 lg:p-7">
         <div className="flex items-end justify-between gap-4">
           <div>
-            <p className="text-white font-semibold text-base sm:text-lg">{item.name}</p>
+            <p className="text-white font-semibold text-base sm:text-lg">
+              {item.name}
+            </p>
             <p className="text-[#d7d7d7] text-sm">{item.category}</p>
           </div>
           <a
             href="#"
             onClick={(e) => e.preventDefault()}
-            className="shrink-0 text-white/80 text-xs font-semibold uppercase tracking-[0.2em] transition-colors duration-200 group-hover:text-white">
+            className="shrink-0 text-white/80 text-xs font-semibold uppercase tracking-[0.2em] transition-colors duration-200 group-hover:text-white"
+          >
             View
           </a>
         </div>

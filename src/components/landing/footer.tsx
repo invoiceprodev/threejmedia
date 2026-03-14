@@ -1,5 +1,5 @@
 import { Twitter, Instagram, Linkedin, Facebook } from "lucide-react";
-import logo from "../../../images/threejmedia_logo.png";
+import { imageAssets } from "@/lib/images";
 
 const navLinks = [
   { label: "Services", href: "#services" },
@@ -31,7 +31,7 @@ export function Footer() {
           <div className="flex flex-col gap-3">
             <div className="flex items-center gap-2">
               <img
-                src={logo}
+                src={imageAssets.logo}
                 alt="Three J Media"
                 className="h-10 w-auto shrink-0"
               />

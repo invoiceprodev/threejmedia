@@ -1,4 +1,4 @@
-import { requireAuth0User } from "./auth.js";
+import { requireAuth0IdToken, requireAuth0User } from "./auth.js";
 
 function json(response, status, payload, extraHeaders = {}) {
   response.writeHead(status, {
@@ -70,6 +70,7 @@ export async function handleMeRequest(request, response, options) {
   const {
     auth0Domain,
     auth0Audience,
+    auth0ClientId,
     supabaseUrl,
     serviceRoleKey,
     signupTable = "client_signups",
@@ -82,7 +83,7 @@ export async function handleMeRequest(request, response, options) {
   if (request.method === "OPTIONS") {
     return json(response, 204, {}, {
       ...corsHeaders,
-      "Access-Control-Allow-Headers": "Content-Type, Authorization",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Auth0-Id-Token",
       "Access-Control-Allow-Methods": "GET, OPTIONS",
     });
   }
@@ -96,25 +97,26 @@ export async function handleMeRequest(request, response, options) {
       auth0Domain,
       auth0Audience,
     });
-
-    const emailFromHeader = String(request.headers?.["x-user-email"] || request.headers?.["X-User-Email"] || "").trim();
-    const auth0UserIdFromHeader = String(
-      request.headers?.["x-auth0-user-id"] || request.headers?.["X-Auth0-User-Id"] || "",
-    ).trim();
+    const identity = await requireAuth0IdToken(request, {
+      auth0Domain,
+      auth0ClientId,
+    });
     const auth0UserId = typeof user.sub === "string" ? user.sub : "";
+    const identityUserId = typeof identity.sub === "string" ? identity.sub : "";
+    const email = typeof identity.email === "string" ? identity.email.trim().toLowerCase() : "";
+    const fullName =
+      typeof identity.name === "string" ? identity.name : typeof user.name === "string" ? user.name : null;
 
-    if (auth0UserIdFromHeader && auth0UserId && auth0UserIdFromHeader !== auth0UserId) {
+    if (!auth0UserId || !identityUserId || identityUserId !== auth0UserId) {
       return json(response, 400, { message: "Your account session could not be verified." }, corsHeaders);
     }
-
-    const email = typeof user.email === "string" ? user.email : emailFromHeader;
 
     const latestSignup = await fetchLatestSignup({
       supabaseUrl,
       serviceRoleKey,
       table: signupTable,
       email,
-      auth0UserId: auth0UserId || auth0UserIdFromHeader,
+      auth0UserId,
     });
 
     return json(
@@ -122,7 +124,7 @@ export async function handleMeRequest(request, response, options) {
       200,
       {
         email: email || latestSignup?.email || "",
-        fullName: typeof user.name === "string" ? user.name : null,
+        fullName,
         auth0UserId,
         latestSignup: latestSignup
           ? {

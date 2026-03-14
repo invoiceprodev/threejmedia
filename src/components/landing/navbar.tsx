@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
-import logo from "../../../images/threejmedia_logo.png";
 import { NavbarAuthActions } from "@/components/landing/navbar-auth-actions";
 import { hasAuth0BrowserEnv } from "@/lib/env";
+import { imageAssets } from "@/lib/images";
 import { navigate } from "@/lib/navigation";
 
 const navLinks = [
@@ -50,7 +50,7 @@ export function Navbar() {
             className="flex items-center gap-2 select-none"
           >
             <img
-              src={logo}
+              src={imageAssets.logo}
               alt="Three J Media"
               className="h-10 w-auto shrink-0"
             />

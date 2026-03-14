@@ -14,7 +14,7 @@ type ContinuePayload = {
 };
 
 export default function SignupContinuePage() {
-  const { isAuthenticated, isLoading, loginWithPopup, loginWithRedirect, getAccessTokenSilently, user } = useAuth0();
+  const { isAuthenticated, isLoading, loginWithPopup, loginWithRedirect, getAccessTokenSilently, getIdTokenClaims, user } = useAuth0();
   const [status, setStatus] = useState<ContinueState>("idle");
   const [message, setMessage] = useState("Check your inbox, confirm your email, then sign in to continue to secure payment.");
   const email = useMemo(() => new URLSearchParams(window.location.search).get("email")?.trim() || "", []);
@@ -32,17 +32,21 @@ export default function SignupContinuePage() {
         setMessage("Checking your verified account and preparing checkout...");
 
         const accessToken = await getAccessTokenSilently();
+        const idTokenClaims = await getIdTokenClaims();
+        const idToken = typeof idTokenClaims?.__raw === "string" ? idTokenClaims.__raw : "";
+
+        if (!idToken) {
+          throw new Error("We could not verify your sign-in details. Please sign in again.");
+        }
+
         const response = await apiFetch("/api/signup/continue", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${accessToken}`,
+            "X-Auth0-Id-Token": idToken,
           },
-          body: JSON.stringify({
-            auth0UserId: user?.sub ?? "",
-            email: user?.email ?? "",
-            emailVerified: user?.email_verified === true,
-          }),
+          body: JSON.stringify({}),
         });
 
         const payload = (await response.json().catch(() => null)) as ContinuePayload | null;
@@ -65,7 +69,7 @@ export default function SignupContinuePage() {
     return () => {
       cancelled = true;
     };
-  }, [getAccessTokenSilently, isAuthenticated, isLoading, user?.email, user?.email_verified, user?.sub]);
+  }, [getAccessTokenSilently, getIdTokenClaims, isAuthenticated, isLoading, user?.email, user?.sub]);
 
   const handleContinue = async () => {
     if (!hasAuth0BrowserEnv) {
