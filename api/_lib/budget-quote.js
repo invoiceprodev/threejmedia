@@ -1,4 +1,5 @@
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+import { sendBudgetQuoteEmails } from "./resend.js";
 
 function json(response, status, payload, extraHeaders = {}) {
   response.writeHead(status, {
@@ -82,6 +83,9 @@ export async function handleBudgetQuoteRequest(request, response, options) {
     serviceRoleKey,
     table = "budget_quote_requests",
     allowedOrigin = "",
+    resendApiKey = "",
+    resendFromEmail = "",
+    internalRecipients = "",
   } = options;
 
   const origin = request.headers?.origin;
@@ -136,6 +140,18 @@ export async function handleBudgetQuoteRequest(request, response, options) {
   }
 
   try {
+    const quote = {
+      name,
+      email,
+      websiteTypeName: String(summary?.websiteTypeName ?? websiteTypeId),
+      addonNames: Array.isArray(summary?.addonNames) ? summary.addonNames.map((item) => String(item)) : addonIds,
+      hostingPlanName: String(summary?.hostingPlanName ?? hostingPlanId),
+      domainOptionName: String(summary?.domainOptionName ?? domainOptionId),
+      onceOffTotal,
+      monthlyTotal,
+      yearlyTotal,
+    };
+
     await insertBudgetQuote({
       supabaseUrl,
       serviceRoleKey,
@@ -153,6 +169,13 @@ export async function handleBudgetQuoteRequest(request, response, options) {
         summary,
         submitted_at: new Date().toISOString(),
       },
+    });
+
+    void sendBudgetQuoteEmails({
+      resendApiKey,
+      resendFromEmail,
+      internalRecipients,
+      quote,
     });
 
     return json(response, 200, { message: "Thanks. Your budget request has been sent." }, corsHeaders);

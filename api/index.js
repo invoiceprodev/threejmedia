@@ -67,6 +67,9 @@ const server = createServer(async (request, response) => {
       serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
       table: process.env.SUPABASE_BUDGET_QUOTES_TABLE,
       allowedOrigin: process.env.ALLOWED_ORIGIN,
+      resendApiKey: process.env.RESEND_API_KEY,
+      resendFromEmail: process.env.RESEND_FROM_EMAIL,
+      internalRecipients: process.env.RESEND_BUDGET_QUOTES_TO,
     });
   }
 

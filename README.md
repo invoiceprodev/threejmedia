@@ -31,6 +31,9 @@ Database: Supabase Postgres
 | `PAYSTACK_PUBLIC_KEY` | Railway / server | Paystack public key for future frontend payment tooling |
 | `PAYSTACK_SECRET_KEY` | Railway / server | Paystack secret key used to initialize transactions |
 | `PAYSTACK_CALLBACK_URL` | Railway / server | Return URL after Paystack checkout completes |
+| `RESEND_API_KEY` | Railway / server | Resend API key used for transactional emails |
+| `RESEND_FROM_EMAIL` | Railway / server | Verified sender email used for quote confirmation emails |
+| `RESEND_BUDGET_QUOTES_TO` | Railway / server | Comma-separated internal recipients for budget quote notifications |
 | `PORT` | Railway / server | Port used by the Railway API locally and in deployment |
 
 3. In Supabase SQL Editor, run [`supabase/newsletter_subscribers.sql`](/Users/jerry/Desktop/threejmedia.co.za/supabase/newsletter_subscribers.sql), [`supabase/client_signups.sql`](/Users/jerry/Desktop/threejmedia.co.za/supabase/client_signups.sql), and [`supabase/budget_quote_requests.sql`](/Users/jerry/Desktop/threejmedia.co.za/supabase/budget_quote_requests.sql).
@@ -55,6 +58,9 @@ Database: Supabase Postgres
    - `AUTH0_AUDIENCE`
    - `PAYSTACK_SECRET_KEY`
    - `PAYSTACK_CALLBACK_URL`
+   - `RESEND_API_KEY`
+   - `RESEND_FROM_EMAIL`
+   - `RESEND_BUDGET_QUOTES_TO`
    - `PORT`
 4. Set `ALLOWED_ORIGIN` to your deployed frontend URL, for example `https://threejmedia.co.za`.
 
