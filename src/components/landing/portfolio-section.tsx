@@ -133,7 +133,8 @@ function PortfolioPanel({
         className="w-full h-full object-cover transition-transform duration-700 ease-in-out group-hover:scale-105"
       />
 
-      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent" />
+      <div className="absolute inset-0 bg-black/50" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-black/10" />
 
       <div className="absolute inset-0 flex flex-col justify-end p-5 sm:p-6 lg:p-7">
         <div className="flex items-end justify-between gap-4">

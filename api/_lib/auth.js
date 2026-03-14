@@ -1,4 +1,9 @@
+import { webcrypto } from "node:crypto";
 import { createRemoteJWKSet, jwtVerify } from "jose";
+
+if (!globalThis.crypto) {
+  globalThis.crypto = webcrypto;
+}
 
 function getBearerToken(request) {
   const authorization = getHeaderValue(request, "authorization");
