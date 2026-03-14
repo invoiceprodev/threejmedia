@@ -77,13 +77,13 @@
     "vite": "6.3.5"
   },
   "scripts": {
-    "dev": "refine dev",
+    "dev": "vite",
     "dev:all": "node scripts/dev-all.mjs",
     "dev:api:once": "node api/index.js",
-    "build": "tsc && refine build",
+    "build": "tsc && vite build",
     "dev:api": "node --watch api/index.js",
     "start": "node api/index.js",
-    "start:web": "refine start",
+    "start:web": "vite preview",
     "start:api": "node api/index.js",
     "refine": "refine"
   },

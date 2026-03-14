@@ -1,9 +1,9 @@
 import localLogo from "../../images/threejmedia_logo.png";
-import localPortfolioOne from "https://res.cloudinary.com/dwqrz9shj/image/upload/v1773484997/portfolio-1_jfp22y.png";
-import localPortfolioTwo from "https://res.cloudinary.com/dwqrz9shj/image/upload/v1773484998/portfolio-3_nzavw4.png";
-import localPortfolioThree from "https://res.cloudinary.com/dwqrz9shj/image/upload/v1773484999/portfolio-4_fje6jy.png";
-import localPortfolioFour from "https://res.cloudinary.com/dwqrz9shj/image/upload/v1773484997/portfolio-2_zq1nyk.png";
-import localPortfolioFive from "https://res.cloudinary.com/dwqrz9shj/image/upload/v1773485000/portfolio-5_tminef.png";
+import localPortfolioOne from "../../images/portfolio-1.png";
+import localPortfolioTwo from "../../images/portfolio-2.png";
+import localPortfolioThree from "../../images/portfolio-3.png";
+import localPortfolioFour from "../../images/portfolio-4.png";
+import localPortfolioFive from "../../images/portfolio-5.png";
 import { env } from "./env";
 
 function getCloudinaryBaseUrl() {
