@@ -1,6 +1,14 @@
 import { LoaderCircle } from "lucide-react";
+import { usePageSeo } from "@/hooks/use-page-seo";
 
 export default function AuthCallbackPage() {
+  usePageSeo({
+    title: "Signing In | Three J Media",
+    description: "Secure authentication callback for Three J Media accounts.",
+    path: "/auth/callback",
+    robots: "noindex, nofollow",
+  });
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-950 px-4 text-white">
       <div className="rounded-[2rem] border border-white/10 bg-white/5 p-8 text-center">

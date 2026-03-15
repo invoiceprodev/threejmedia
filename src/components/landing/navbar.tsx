@@ -6,6 +6,9 @@ import { imageAssets } from "@/lib/images";
 import { navigate } from "@/lib/navigation";
 
 const navLinks = [
+  { label: "About", href: "/about", type: "route" as const },
+  { label: "Services", href: "/services", type: "route" as const },
+  { label: "Blog", href: "/blog", type: "route" as const },
   { label: "Domains", href: "#domains" },
   { label: "Portfolio", href: "#portfolio" },
   { label: "Pricing", href: "#pricing" },
@@ -14,6 +17,8 @@ const navLinks = [
 export function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const isHomePage = window.location.pathname === "/";
+  const useSolidNav = isScrolled || !isHomePage;
 
   useEffect(() => {
     const onScroll = () => setIsScrolled(window.scrollY > 20);
@@ -21,16 +26,27 @@ export function Navbar() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const handleScroll = (href: string) => {
+  const handleNavigate = (href: string) => {
     setMobileOpen(false);
-    const el = document.querySelector(href);
-    if (el) el.scrollIntoView({ behavior: "smooth" });
+
+    if (href.startsWith("#")) {
+      if (window.location.pathname !== "/") {
+        window.location.assign(`/${href}`);
+        return;
+      }
+
+      const el = document.querySelector(href);
+      if (el) el.scrollIntoView({ behavior: "smooth" });
+      return;
+    }
+
+    navigate(href);
   };
 
   return (
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        isScrolled
+        useSolidNav
           ? "bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-sm"
           : "bg-transparent"
       }`}
@@ -42,6 +58,11 @@ export function Navbar() {
             href="#"
             onClick={(e) => {
               e.preventDefault();
+              if (!isHomePage) {
+                navigate("/");
+                return;
+              }
+
               window.scrollTo({ top: 0, behavior: "smooth" });
             }}
             className="flex items-center gap-2 select-none"
@@ -58,9 +79,9 @@ export function Navbar() {
             {navLinks.map(({ label, href }) => (
               <button
                 key={label}
-                onClick={() => handleScroll(href)}
+                onClick={() => handleNavigate(href)}
                 className={`text-sm font-medium transition-colors duration-200 hover:underline underline-offset-4 ${
-                  isScrolled
+                  useSolidNav
                     ? "text-gray-600 hover:text-gray-900"
                     : "text-gray-300 hover:text-white"
                 }`}
@@ -79,7 +100,7 @@ export function Navbar() {
           <button
             onClick={() => setMobileOpen(!mobileOpen)}
             className={`md:hidden p-2 rounded-lg transition-colors ${
-              isScrolled
+              useSolidNav
                 ? "text-gray-900 hover:bg-gray-100"
                 : "text-white hover:bg-white/10"
             }`}
@@ -101,7 +122,7 @@ export function Navbar() {
             {navLinks.map(({ label, href }) => (
               <button
                 key={label}
-                onClick={() => handleScroll(href)}
+                onClick={() => handleNavigate(href)}
                 className="text-left text-gray-700 hover:text-gray-900 font-medium py-2.5 px-3 rounded-lg hover:bg-gray-50 transition-colors text-sm"
               >
                 {label}

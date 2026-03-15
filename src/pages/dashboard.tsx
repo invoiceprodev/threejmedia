@@ -8,6 +8,7 @@ import { hasAuth0BrowserEnv, hasWhatsAppBrowserEnv } from "@/lib/env";
 import { apiFetch } from "@/lib/api-client";
 import { navigate } from "@/lib/navigation";
 import { getWhatsAppUrl } from "@/lib/whatsapp";
+import { usePageSeo } from "@/hooks/use-page-seo";
 
 type DashboardPayload = {
   email: string;
@@ -54,6 +55,13 @@ export default function DashboardPage() {
     ns3: "",
     ns4: "",
     ns5: "",
+  });
+
+  usePageSeo({
+    title: "Customer Dashboard | Three J Media",
+    description: "Secure customer dashboard for managing your plan, domain onboarding, and account details.",
+    path: "/dashboard",
+    robots: "noindex, nofollow",
   });
 
   useEffect(() => {

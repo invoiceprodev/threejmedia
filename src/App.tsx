@@ -6,6 +6,10 @@ import PaymentSuccessPage from "@/pages/payment-success";
 import AuthCallbackPage from "@/pages/auth-callback";
 import SignupContinuePage from "@/pages/signup-continue";
 import { LegalPage, legalDocuments } from "@/pages/legal";
+import AboutPage from "@/pages/about";
+import ServicesPage from "@/pages/services";
+import BlogPage from "@/pages/blog";
+import BlogPostPage from "@/pages/blog-post";
 
 function App() {
   const [pathname, setPathname] = useState(() => window.location.pathname);
@@ -24,6 +28,14 @@ function App() {
 
   if (pathname === "/dashboard") {
     page = <DashboardPage />;
+  } else if (pathname === "/about") {
+    page = <AboutPage />;
+  } else if (pathname === "/services") {
+    page = <ServicesPage />;
+  } else if (pathname === "/blog") {
+    page = <BlogPage />;
+  } else if (pathname.startsWith("/blog/")) {
+    page = <BlogPostPage slug={pathname.replace("/blog/", "")} />;
   } else if (pathname === "/payment/success") {
     page = <PaymentSuccessPage />;
   } else if (pathname === "/auth/callback") {

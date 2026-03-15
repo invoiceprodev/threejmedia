@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { hasAuth0BrowserEnv } from "@/lib/env";
 import { apiFetch } from "@/lib/api-client";
 import { navigate } from "@/lib/navigation";
+import { usePageSeo } from "@/hooks/use-page-seo";
 
 type VerificationState = "loading" | "success" | "error";
 
@@ -27,6 +28,13 @@ export default function PaymentSuccessPage() {
   const [message, setMessage] = useState("Verifying your payment...");
   const [payload, setPayload] = useState<VerificationPayload | null>(null);
   const reference = useMemo(() => new URLSearchParams(window.location.search).get("reference"), []);
+
+  usePageSeo({
+    title: "Payment Verification | Three J Media",
+    description: "Secure payment verification page for your Three J Media order.",
+    path: "/payment/success",
+    robots: "noindex, nofollow",
+  });
 
   useEffect(() => {
     if (!reference) {

@@ -1,7 +1,8 @@
-import { ArrowLeft, FileText } from "lucide-react";
+import { FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { MarketingLayout } from "@/components/landing/marketing-layout";
 import { navigate } from "@/lib/navigation";
-import { imageAssets } from "@/lib/images";
+import { usePageSeo } from "@/hooks/use-page-seo";
 
 type LegalSection = {
   heading: string;
@@ -206,9 +207,15 @@ export const legalDocuments: Record<string, LegalDocument> = {
 export function LegalPage({ pathname }: { pathname: string }) {
   const document = legalDocuments[pathname];
 
+  usePageSeo({
+    title: document ? `${document.title} | Three J Media` : "Legal | Three J Media",
+    description: document?.summary || "Legal documents for Three J Media services and website use.",
+    path: pathname,
+  });
+
   if (!document) {
     return (
-      <div className="min-h-screen bg-[#f7f4ec] px-4 py-16 text-gray-950">
+      <MarketingLayout contentClassName="py-16">
         <div className="mx-auto max-w-3xl rounded-[2rem] border border-black/10 bg-white p-8 shadow-[0_24px_80px_-36px_rgba(15,23,42,0.28)]">
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-gray-500">Legal</p>
           <h1 className="mt-4 text-3xl font-extrabold tracking-tight">Document not found</h1>
@@ -219,25 +226,13 @@ export function LegalPage({ pathname }: { pathname: string }) {
             Back to Home
           </Button>
         </div>
-      </div>
+      </MarketingLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#f7f4ec] px-4 py-10 text-gray-950 sm:px-6 sm:py-14">
+    <MarketingLayout>
       <div className="mx-auto max-w-4xl">
-        <div className="mb-6 flex items-center justify-between gap-4">
-          <button
-            onClick={() => navigate("/")}
-            className="inline-flex items-center gap-2 rounded-full border border-black/10 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to Home
-          </button>
-
-          <img src={imageAssets.logo} alt="Three J Media" className="h-10 w-auto" />
-        </div>
-
         <article className="overflow-hidden rounded-[2rem] border border-black/10 bg-white shadow-[0_24px_80px_-36px_rgba(15,23,42,0.28)]">
           <div className="border-b border-black/10 bg-gray-950 px-6 py-8 text-white sm:px-10 sm:py-10">
             <div className="inline-flex items-center gap-2 rounded-full border border-[#83c406]/35 bg-[#83c406]/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-[#dff3ab]">
@@ -267,6 +262,6 @@ export function LegalPage({ pathname }: { pathname: string }) {
           </div>
         </article>
       </div>
-    </div>
+    </MarketingLayout>
   );
 }

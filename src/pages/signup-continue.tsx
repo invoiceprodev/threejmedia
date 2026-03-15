@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { hasAuth0BrowserEnv } from "@/lib/env";
 import { apiFetch } from "@/lib/api-client";
 import { navigate } from "@/lib/navigation";
+import { usePageSeo } from "@/hooks/use-page-seo";
 
 type ContinueState = "idle" | "loading" | "error";
 
@@ -18,6 +19,13 @@ export default function SignupContinuePage() {
   const [status, setStatus] = useState<ContinueState>("idle");
   const [message, setMessage] = useState("Check your inbox, confirm your email, then sign in to continue to secure payment.");
   const email = useMemo(() => new URLSearchParams(window.location.search).get("email")?.trim() || "", []);
+
+  usePageSeo({
+    title: "Continue Signup | Three J Media",
+    description: "Continue your Three J Media signup after verifying your email address.",
+    path: "/signup/continue",
+    robots: "noindex, nofollow",
+  });
 
   useEffect(() => {
     if (!hasAuth0BrowserEnv || isLoading || !isAuthenticated) {

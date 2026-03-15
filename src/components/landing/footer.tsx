@@ -3,11 +3,12 @@ import { imageAssets } from "@/lib/images";
 import { navigate } from "@/lib/navigation";
 
 const navLinks = [
+  { label: "About", href: "/about", type: "route" as const },
+  { label: "Services", href: "/services", type: "route" as const },
+  { label: "Blog", href: "/blog", type: "route" as const },
   { label: "Domains", href: "#domains" },
   { label: "Portfolio", href: "#portfolio" },
   { label: "Pricing", href: "#pricing" },
-  { label: "Newsletter", href: "#newsletter" },
-  { label: "Testimonials", href: "#testimonials" },
   { label: "Contact", href: "#contact" },
 ];
 
@@ -28,9 +29,19 @@ const legalLinks = [
 ];
 
 export function Footer() {
-  const handleScroll = (href: string) => {
-    const el = document.querySelector(href);
-    if (el) el.scrollIntoView({ behavior: "smooth" });
+  const handleNavigate = (href: string) => {
+    if (href.startsWith("#")) {
+      if (window.location.pathname !== "/") {
+        window.location.assign(`/${href}`);
+        return;
+      }
+
+      const el = document.querySelector(href);
+      if (el) el.scrollIntoView({ behavior: "smooth" });
+      return;
+    }
+
+    navigate(href);
   };
 
   return (
@@ -57,7 +68,7 @@ export function Footer() {
             {navLinks.map(({ label, href }) => (
               <button
                 key={label}
-                onClick={() => handleScroll(href)}
+                onClick={() => handleNavigate(href)}
                 className="text-gray-400 hover:text-[#83c406] text-sm font-medium transition-colors duration-200"
               >
                 {label}

@@ -12,11 +12,19 @@ import { Footer } from "@/components/landing/footer";
 import { BudgetWizard } from "@/components/landing/budget-wizard";
 import { PlanSignupDialog } from "@/components/landing/plan-signup-dialog";
 import { type PlanId } from "@/lib/plans";
+import { usePageSeo } from "@/hooks/use-page-seo";
 
 export default function LandingPage() {
   const [wizardOpen, setWizardOpen] = useState(false);
   const [signupOpen, setSignupOpen] = useState(false);
   const [selectedPlanId, setSelectedPlanId] = useState<PlanId | null>(null);
+
+  usePageSeo({
+    title: "Three J Media | Web Design, Domains and Hosting in South Africa",
+    description:
+      "Three J Media builds websites, manages domains, and provides hosting and launch support for South African businesses ready to grow online.",
+    path: "/",
+  });
 
   const handleSelectPlan = (planId: PlanId) => {
     setSelectedPlanId(planId);
