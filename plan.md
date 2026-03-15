@@ -9,7 +9,8 @@ A modern, premium, conversion-focused landing page for a South African web desig
 - HostAfrica reseller integration is now wired for live TLD pricing, domain lookup, registration, and transfer flows.
 - Landing page includes a customer-facing domain search section backed by the reseller API.
 - Domain order dialog supports dry-run validation before any live HostAfrica order is submitted.
-- Follow-up UI task: revisit the domain order dialog width and input layout on desktop, as the popup still feels too narrow for comfortable entry on some screen sizes.
+- Mobile dialog width issues have been fixed across the budget wizard, plan signup, and domain order flows.
+- Follow-up UI task: revisit the domain order dialog width and input layout on desktop, as the popup still feels a bit narrow for comfortable entry on some screen sizes.
 - Follow-up backend task for tomorrow: debug `POST /api/domain-fulfillment/submit` on Railway. Current `curl` request shape is correct, but `https://api.threejmedia.co.za/api/domain-fulfillment/submit` returned `502 Application failed to respond` during deployment/runtime verification.
 - Tomorrow checks: confirm Railway deploy completed, verify `/health`, verify `DOMAIN_FULFILLMENT_ADMIN_TOKEN` is present in Railway, inspect Railway logs for the fulfillment submit route, then retry the dry run with `uifmasters.co.za`.
 
@@ -26,11 +27,11 @@ Deliver a fully functional landing page skeleton with the most conversion-critic
 
 #### Tasks
 
-- [ ] Set up page layout and navigation header with logo and nav links
-- [ ] Build Hero section with gradient background, headline, subheadline, CTA buttons and Unsplash placeholder image
-- [ ] Build Services section with 4 feature cards
-- [ ] Build Pricing section with 3 cards (highlight "Business Website" as Most Popular)
-- [ ] Build Footer with links, social icons and copyright
+- [x] Set up page layout and navigation header with logo and nav links
+- [x] Build Hero section with gradient background, headline, subheadline, CTA buttons and placeholder visuals
+- [x] Build Services section with 4 feature cards
+- [x] Build Pricing section with 3 cards (highlight "Business Website" as Most Popular)
+- [x] Build Footer with links, social icons and copyright
 
 #### Notes
 
@@ -38,6 +39,7 @@ Deliver a fully functional landing page skeleton with the most conversion-critic
 - Brand: South African agency, premium SaaS aesthetic
 - Colors: Dark gradient hero, clean white sections, accent color for CTA buttons
 - All sections must be fully responsive (mobile-first)
+- Services are now surfaced as dedicated hero slides instead of a standalone section.
 
 </phase>
 
@@ -55,10 +57,10 @@ Add trust-building sections that showcase past work, creator clients and client 
 #### Tasks
 
 - [ ] Build "Trusted By South African Creators" section with avatar placeholder cards (iamthandolwethu, dineo_zonke, thobi_rose, koolarney)
-- [ ] Build Portfolio section with grid layout, Unsplash placeholder images, project name, category and hover overlay
-- [ ] Build "Why Choose Us" section with 4 feature cards (Fast, Mobile First, Local Support, Growth Focused)
-- [ ] Build Testimonials section with quote cards including client name and role
-- [ ] Add final CTA section (Ready To Launch Your Website?) with two action buttons
+- [x] Build Portfolio section with grid layout, hosted images, project name, category and hover overlay
+- [x] Build "Why Choose Us" section with 4 feature cards (Fast, Mobile First, Local Support, Growth Focused)
+- [x] Build Testimonials section with quote cards including client name and role
+- [x] Add final CTA section (Ready To Launch Your Website?) with two action buttons
 
 </phase>
 
@@ -68,10 +70,10 @@ Refine the page with smooth animations, scroll effects and final visual polish.
 
 #### Tasks
 
-- [ ] Add smooth scroll-in animations for section headings and cards
-- [ ] Add hover micro-animations to all cards (services, pricing, portfolio)
+- [x] Add smooth scroll-in animations for section headings and cards
+- [x] Add hover micro-animations to all cards (services, pricing, portfolio)
 - [ ] Improve mobile spacing and typography across all sections
-- [ ] Add smooth scroll behaviour for nav anchor links
+- [x] Add smooth scroll behaviour for nav anchor links
 - [ ] Final visual QA pass: spacing, shadows, color consistency
 
 </phase>
@@ -89,20 +91,21 @@ Replace hero CTAs with a single "Create for Your Budget" button that opens a mul
 
 #### Tasks
 
-- [ ] Replace hero CTA buttons with single "Create for Your Budget" button
-- [ ] Build multi-step budget wizard with the following steps:
+- [x] Replace hero CTA buttons with single "Create for Your Budget" button
+- [x] Build multi-step budget wizard with the following steps:
   - Step 1: Website Type (Landing Page R1,999 / Business Website R4,999 / E-commerce R7,999)
   - Step 2: Add-on Features (toggle cards) — Blog (+R500), Online Store (+R2,000), Booking System (+R1,500), SEO Setup (+R800), Logo Design (+R1,200), Monthly Maintenance (+R699/mo)
   - Step 3: Hosting Plan (Basic R99/mo / Standard R199/mo / Premium R399/mo)
-  - Step 4: Summary — shows selected items, live price total and "Get My Custom Quote" CTA
-- [ ] Live price total in a sticky/persistent bar updating as user makes selections
-- [ ] "Get My Custom Quote" final step with name + email fields to capture lead
+  - Step 4: Domain extension selection with live lookup support
+  - Step 5: Summary — shows selected items, live price total and "Get My Custom Quote" CTA
+- [x] Live price total in a sticky/persistent bar updating as user makes selections
+- [x] "Get My Custom Quote" final step with name + email fields to capture lead
 
 #### Notes
 
-- Data source: Static/hardcoded pricing (no backend)
+- Pricing remains static, while domain extension data and availability now use live reseller endpoints
 - Open as a full-screen modal or slide-over panel from the hero CTA
-- Show step progress indicator (Step 1 of 4)
+- Show step progress indicator
 - All prices in ZAR (R)
 - Mobile-first, large tap targets on all toggle cards
 

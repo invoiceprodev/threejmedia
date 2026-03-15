@@ -38,9 +38,15 @@ alter table public.client_signups add column if not exists domain_fulfillment_no
 alter table public.client_signups add column if not exists domain_fulfillment_requested_at timestamptz;
 alter table public.client_signups add column if not exists domain_fulfillment_completed_at timestamptz;
 alter table public.client_signups add column if not exists domain_onboarding_details jsonb;
+alter table public.client_signups add column if not exists auth0_user_id text;
+alter table public.client_signups add column if not exists payment_reference text;
+alter table public.client_signups add column if not exists payment_status text not null default 'initialized';
+alter table public.client_signups add column if not exists payment_provider text not null default 'paystack';
 
 create index if not exists client_signups_email_idx on public.client_signups (email);
 create index if not exists client_signups_created_at_idx on public.client_signups (created_at desc);
+create index if not exists client_signups_auth0_user_id_idx on public.client_signups (auth0_user_id);
+create index if not exists client_signups_payment_reference_idx on public.client_signups (payment_reference);
 
 alter table public.client_signups enable row level security;
 

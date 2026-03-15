@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ArrowRight, CheckCircle2, Eye, EyeOff, Globe2, ShieldCheck } from "lucide-react";
 import {
   Dialog,
@@ -50,6 +50,7 @@ function normalizeDomainName(value: string) {
 
 export function PlanSignupDialog({ open, planId, onOpenChange }: PlanSignupDialogProps) {
   const plan = useMemo(() => (planId ? getPlanById(planId) : undefined), [planId]);
+  const [domainOptions, setDomainOptions] = useState<DomainOption[]>(includedDomainOptions);
   const [companyName, setCompanyName] = useState("");
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -57,6 +58,8 @@ export function PlanSignupDialog({ open, planId, onOpenChange }: PlanSignupDialo
   const [confirmPassword, setConfirmPassword] = useState("");
   const [domainName, setDomainName] = useState("");
   const [domainExtension, setDomainExtension] = useState(".co.za");
+  const [domainAvailability, setDomainAvailability] = useState<boolean | null>(null);
+  const [isLoadingDomainOptions, setIsLoadingDomainOptions] = useState(false);
   const [isCheckingDomain, setIsCheckingDomain] = useState(false);
   const [domainStatus, setDomainStatus] = useState("Your plan includes 1 year of domain registration from the purchase date.");
   const [passwordVisible, setPasswordVisible] = useState(false);
@@ -74,6 +77,7 @@ export function PlanSignupDialog({ open, planId, onOpenChange }: PlanSignupDialo
     setConfirmPassword("");
     setDomainName("");
     setDomainExtension(".co.za");
+    setDomainAvailability(null);
     setIsCheckingDomain(false);
     setDomainStatus("Your plan includes 1 year of domain registration from the purchase date.");
     setPasswordVisible(false);
@@ -81,6 +85,58 @@ export function PlanSignupDialog({ open, planId, onOpenChange }: PlanSignupDialo
     setStatus("idle");
     setMessage("Create your account and we’ll take you straight to secure Paystack checkout.");
   };
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    let cancelled = false;
+
+    async function loadDomainOptions() {
+      setIsLoadingDomainOptions(true);
+
+      try {
+        const response = await apiFetch("/api/domains/extensions");
+        const payload = (await response.json().catch(() => null)) as
+          | { options?: DomainOption[]; message?: string }
+          | null;
+
+        if (!response.ok) {
+          throw new Error(payload?.message || "We could not load domain extensions right now.");
+        }
+
+        if (cancelled) {
+          return;
+        }
+
+        const liveOptions = Array.isArray(payload?.options) && payload.options.length > 0 ? payload.options : includedDomainOptions;
+        setDomainOptions(liveOptions);
+        setDomainExtension((current) =>
+          liveOptions.some((option) => option.extension === current) ? current : liveOptions[0]?.extension || ".co.za",
+        );
+      } catch {
+        if (!cancelled) {
+          setDomainOptions(includedDomainOptions);
+        }
+      } finally {
+        if (!cancelled) {
+          setIsLoadingDomainOptions(false);
+        }
+      }
+    }
+
+    void loadDomainOptions();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [open]);
+
+  useEffect(() => {
+    setDomainAvailability(null);
+    setDomainStatus("Your plan includes 1 year of domain registration from the purchase date.");
+  }, [domainName, domainExtension]);
 
   const handleOpenChange = (nextOpen: boolean) => {
     onOpenChange(nextOpen);
@@ -116,6 +172,12 @@ export function PlanSignupDialog({ open, planId, onOpenChange }: PlanSignupDialo
     if (!normalizedDomainName || !domainExtension) {
       setStatus("error");
       setMessage("Choose the domain you want included with your plan before continuing.");
+      return;
+    }
+
+    if (domainAvailability !== true) {
+      setStatus("error");
+      setMessage("Check that your selected domain is available before continuing to payment.");
       return;
     }
 
@@ -173,6 +235,7 @@ export function PlanSignupDialog({ open, planId, onOpenChange }: PlanSignupDialo
     const normalizedDomainName = normalizeDomainName(domainName);
 
     if (!normalizedDomainName) {
+      setDomainAvailability(null);
       setDomainStatus("Enter the name you want first, for example yourbrand.");
       return;
     }
@@ -202,13 +265,17 @@ export function PlanSignupDialog({ open, planId, onOpenChange }: PlanSignupDialo
 
       const result = payload?.results?.[0];
       if (result?.available === true) {
+        setDomainAvailability(true);
         setDomainStatus(`${result.domain} is available and included for the first year from your purchase date. Auto renew starts one year later.`);
       } else if (result?.available === false) {
+        setDomainAvailability(false);
         setDomainStatus(`${result.domain} is already taken. Try another name or extension.`);
       } else {
+        setDomainAvailability(null);
         setDomainStatus("We could not confirm that domain yet. You can try again.");
       }
     } catch (error) {
+      setDomainAvailability(null);
       setDomainStatus(error instanceof Error ? error.message : "We could not check domain availability right now.");
     } finally {
       setIsCheckingDomain(false);
@@ -280,7 +347,7 @@ export function PlanSignupDialog({ open, planId, onOpenChange }: PlanSignupDialo
                     value={domainExtension}
                     onChange={(event) => setDomainExtension(event.target.value)}
                     className="h-11 rounded-xl border border-gray-200 bg-white px-3 text-sm text-gray-950 outline-none">
-                    {includedDomainOptions.map((option) => (
+                    {domainOptions.map((option) => (
                       <option key={option.id} value={option.extension}>
                         {option.name}
                       </option>
@@ -290,12 +357,17 @@ export function PlanSignupDialog({ open, planId, onOpenChange }: PlanSignupDialo
                     type="button"
                     variant="outline"
                     onClick={() => void handleCheckDomain()}
-                    disabled={isCheckingDomain}
+                    disabled={isCheckingDomain || isLoadingDomainOptions}
                     className="h-11 rounded-xl border-gray-300 bg-white text-gray-950 hover:bg-gray-100">
                     {isCheckingDomain ? "Checking..." : "Check"}
                   </Button>
                 </div>
                 <p className="mt-3 text-xs leading-relaxed text-gray-500">{domainStatus}</p>
+                {domainAvailability === true && (
+                  <p className="mt-2 text-xs font-medium text-[#5d8f00]">
+                    First-year registration is included in your package. Renewal starts from year two in your dashboard.
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2">

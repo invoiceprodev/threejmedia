@@ -206,10 +206,10 @@ export default function DashboardPage() {
               <p>Reference: {profile?.latestSignup?.paymentReference || "Unavailable"}</p>
               <p>Domain: {profile?.latestSignup?.selectedDomain || "No domain selected yet"}</p>
               <p>
-                Auto renew:{" "}
+                Next renewal:{" "}
                 {profile?.latestSignup?.domainAutoRenewAt
                   ? new Date(profile.latestSignup.domainAutoRenewAt).toLocaleDateString("en-ZA")
-                  : "Starts after payment"}
+                  : "Starts after the included first year"}
               </p>
               <p>Fulfillment: {profile?.latestSignup?.domainFulfillmentStatus || "Awaiting fulfillment"}</p>
             </div>
