@@ -8,7 +8,7 @@ export function CTASection() {
   };
 
   return (
-    <section id="contact" className="relative py-16 md:py-24 lg:py-28 overflow-hidden bg-gray-950">
+    <section id="contact" className="relative overflow-hidden bg-gray-950 py-16 md:py-24 lg:py-28 scroll-mt-24">
       {/* Subtle grid texture */}
       <div
         className="absolute inset-0 opacity-[0.06]"

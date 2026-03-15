@@ -189,11 +189,11 @@ export function DomainSearchSection({ onOpenWizard }: { onOpenWizard?: () => voi
   };
 
   return (
-    <section id="domains" className="relative overflow-hidden bg-[#f5f2e8] py-16 md:py-24">
+    <section id="domains" className="relative overflow-hidden bg-[#f5f2e8] py-16 md:py-24 scroll-mt-24">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(131,196,6,0.16),_transparent_45%),radial-gradient(circle_at_bottom_right,_rgba(17,24,39,0.10),_transparent_35%)]" />
 
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="grid gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
+        <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-start lg:gap-10">
           <div>
             <div className="inline-flex items-center gap-2 rounded-full border border-black/10 bg-white/70 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-gray-700">
               <Globe className="h-3.5 w-3.5" />

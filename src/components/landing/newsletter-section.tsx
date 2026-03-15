@@ -53,7 +53,7 @@ export function NewsletterSection() {
   };
 
   return (
-    <section id="newsletter" className="py-16 md:py-24 bg-gray-50">
+    <section id="newsletter" className="py-16 md:py-24 bg-gray-50 scroll-mt-24">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div
           ref={heading.ref as React.RefObject<HTMLDivElement>}
@@ -77,7 +77,7 @@ export function NewsletterSection() {
           className={`transition-all duration-500 ease-out ${
             panel.isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-5"
           }`}>
-          <div className="relative overflow-hidden rounded-[2rem] border border-gray-200 bg-gray-950 px-6 py-8 sm:px-8 sm:py-10 md:px-12 md:py-12 shadow-[0_24px_80px_-32px_rgba(0,0,0,0.45)]">
+          <div className="relative overflow-hidden rounded-[2rem] border border-gray-200 bg-gray-950 px-5 py-7 sm:px-8 sm:py-10 md:px-12 md:py-12 shadow-[0_24px_80px_-32px_rgba(0,0,0,0.45)]">
             <div
               className="absolute inset-0 opacity-[0.14]"
               style={{

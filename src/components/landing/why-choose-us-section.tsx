@@ -29,7 +29,7 @@ export function WhyChooseUsSection() {
   const cards = useScrollAnimation({ threshold: 0.1, rootMargin: "0px 0px -40px 0px" });
 
   return (
-    <section id="why-us" className="py-16 md:py-24 bg-gray-50">
+    <section id="why-us" className="py-16 md:py-24 bg-gray-50 scroll-mt-24">
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section heading */}
         <div

@@ -66,7 +66,7 @@ export function HeroSection({ onOpenWizard }: { onOpenWizard?: () => void }) {
   const slide = slides[current];
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gray-950">
+    <section className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gray-950 scroll-mt-24">
       {/* Subtle grid texture */}
       <div
         className="absolute inset-0 opacity-[0.06]"
@@ -80,7 +80,7 @@ export function HeroSection({ onOpenWizard }: { onOpenWizard?: () => void }) {
       {/* Subtle radial highlight */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[500px] rounded-full bg-white/[0.03] blur-3xl pointer-events-none" />
 
-      <div className="relative z-10 w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-28 flex flex-col items-center text-center">
+      <div className="relative z-10 mx-auto flex w-full max-w-4xl flex-col items-center px-4 pt-28 pb-20 text-center sm:px-6 sm:pt-32 sm:pb-28 lg:px-8">
         {/* Eyebrow */}
         <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[#83c406]/35 bg-[#83c406]/10 text-[#d6ef9a] text-xs font-semibold tracking-widest uppercase mb-10 select-none">
           <span className="w-1.5 h-1.5 rounded-full bg-[#83c406] animate-pulse" />
@@ -89,14 +89,14 @@ export function HeroSection({ onOpenWizard }: { onOpenWizard?: () => void }) {
 
         {/* Slide content */}
         <div
-          className="w-full min-h-[260px] sm:min-h-[280px] flex flex-col items-center justify-center"
+          className="flex min-h-[220px] w-full flex-col items-center justify-center sm:min-h-[280px]"
           style={{
             opacity: animating ? 0 : 1,
             transform: animating ? `translateY(${direction === "next" ? "12px" : "-12px"})` : "translateY(0px)",
             transition: "opacity 0.4s ease, transform 0.4s ease",
           }}>
           {/* Headline */}
-          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold leading-[1.08] tracking-tight text-white mb-6 whitespace-pre-line">
+          <h1 className="mb-5 whitespace-pre-line text-3xl font-extrabold leading-[1.02] tracking-tight text-white sm:mb-6 sm:text-5xl md:text-6xl lg:text-7xl">
             {slide.heading.split("\n").map((line, i) => (
               <span key={i}>
                 {i === 0 ? line : <span className="text-gray-300">{line}</span>}
@@ -106,24 +106,24 @@ export function HeroSection({ onOpenWizard }: { onOpenWizard?: () => void }) {
           </h1>
 
           {/* Subheadline */}
-          <p className="text-base sm:text-lg md:text-xl text-gray-400 leading-relaxed max-w-2xl mb-0">
+          <p className="max-w-2xl text-sm leading-relaxed text-gray-400 sm:text-lg md:text-xl">
             {slide.subheading}
           </p>
         </div>
 
         {/* CTAs — static across all slides */}
-        <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
+        <div className="mt-8 flex w-full flex-col justify-center gap-4 sm:mt-10 sm:w-auto sm:flex-row">
           <Button
             size="lg"
             onClick={() => onOpenWizard?.()}
-            className="group bg-white text-gray-900 hover:bg-gray-100 border-0 font-bold px-10 h-13 md:h-14 rounded-xl text-base shadow-lg transition-all duration-200">
+            className="group h-12 w-full rounded-xl border-0 bg-white px-6 text-base font-bold text-gray-900 shadow-lg transition-all duration-200 hover:bg-gray-100 sm:h-13 sm:w-auto sm:px-10 md:h-14">
             <Sparkles className="mr-2 w-4 h-4 transition-transform duration-200 group-hover:scale-110" />
             Create for Your Budget
           </Button>
         </div>
 
         {/* Trust row */}
-        <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4 text-sm text-gray-500">
+        <div className="mt-6 flex flex-col items-center justify-center gap-3 text-sm text-gray-500 sm:mt-8 sm:flex-row sm:gap-4">
           {["50+ sites launched", "14-day delivery", "Local SA support"].map((item) => (
             <div key={item} className="flex items-center gap-2">
               <span className="w-1 h-1 rounded-full bg-gray-500" />
@@ -133,7 +133,7 @@ export function HeroSection({ onOpenWizard }: { onOpenWizard?: () => void }) {
         </div>
 
         {/* Slider controls */}
-        <div className="mt-12 flex items-center gap-6">
+        <div className="mt-10 flex flex-wrap items-center justify-center gap-4 sm:mt-12 sm:gap-6">
           {/* Prev arrow */}
           <button
             onClick={goPrev}
@@ -143,7 +143,7 @@ export function HeroSection({ onOpenWizard }: { onOpenWizard?: () => void }) {
           </button>
 
           {/* Dot indicators */}
-          <div className="flex items-center gap-2">
+          <div className="flex max-w-[70vw] flex-wrap items-center justify-center gap-2 sm:max-w-none">
             {slides.map((_, i) => (
               <button
                 key={i}

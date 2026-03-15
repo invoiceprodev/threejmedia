@@ -44,7 +44,7 @@ export function PortfolioSection() {
   });
 
   return (
-    <section id="portfolio" className="py-16 md:py-24 bg-white">
+    <section id="portfolio" className="py-16 md:py-24 bg-white scroll-mt-24">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section heading */}
         <div
@@ -70,7 +70,7 @@ export function PortfolioSection() {
 
       <div
         ref={cards.ref as React.RefObject<HTMLDivElement>}
-        className={`w-full transition-all duration-500 ease-out ${
+        className={`w-full px-4 sm:px-0 transition-all duration-500 ease-out ${
           cards.isVisible
             ? "opacity-100 translate-y-0"
             : "opacity-0 translate-y-5"

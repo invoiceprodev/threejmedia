@@ -2,7 +2,7 @@ import { Twitter, Instagram, Linkedin, Facebook } from "lucide-react";
 import { imageAssets } from "@/lib/images";
 
 const navLinks = [
-  { label: "Services", href: "#services" },
+  { label: "Domains", href: "#domains" },
   { label: "Portfolio", href: "#portfolio" },
   { label: "Pricing", href: "#pricing" },
   { label: "Newsletter", href: "#newsletter" },
@@ -26,7 +26,7 @@ export function Footer() {
   return (
     <footer className="bg-gray-950 border-t border-[#83c406]/20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-8">
+        <div className="flex flex-col items-center text-center md:flex-row md:items-center md:justify-between md:text-left gap-8">
           {/* Brand */}
           <div className="flex flex-col gap-3">
             <div className="flex items-center gap-2">
@@ -43,7 +43,7 @@ export function Footer() {
           </div>
 
           {/* Nav links */}
-          <nav className="flex flex-wrap gap-x-6 gap-y-2">
+          <nav className="flex flex-wrap justify-center gap-x-6 gap-y-2 md:justify-start">
             {navLinks.map(({ label, href }) => (
               <button
                 key={label}
@@ -56,7 +56,7 @@ export function Footer() {
           </nav>
 
           {/* Social */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center justify-center gap-3">
             {socialLinks.map(({ icon: Icon, href, label }) => (
               <a
                 key={label}

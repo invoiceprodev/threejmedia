@@ -15,7 +15,7 @@ export function PricingSection({ onSelectPlan }: PricingSectionProps) {
   });
 
   return (
-    <section id="pricing" className="py-16 md:py-24 bg-gray-50">
+    <section id="pricing" className="py-16 md:py-24 bg-gray-50 scroll-mt-24">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section heading */}
         <div
@@ -56,7 +56,7 @@ export function PricingSection({ onSelectPlan }: PricingSectionProps) {
                     : "opacity-0 translate-y-5"
                 } ${
                   popular
-                    ? "bg-gray-900 text-white shadow-2xl shadow-gray-900/30 scale-[1.03] border border-gray-800"
+                    ? "border border-gray-800 bg-gray-900 text-white shadow-2xl shadow-gray-900/30 md:scale-[1.03]"
                     : "bg-white border border-gray-200 shadow-sm hover:shadow-md hover:-translate-y-1"
                 }`}
               >

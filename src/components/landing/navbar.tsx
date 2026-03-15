@@ -7,7 +7,7 @@ import { imageAssets } from "@/lib/images";
 import { navigate } from "@/lib/navigation";
 
 const navLinks = [
-  { label: "Services", href: "#services" },
+  { label: "Domains", href: "#domains" },
   { label: "Portfolio", href: "#portfolio" },
   { label: "Pricing", href: "#pricing" },
   { label: "Newsletter", href: "#newsletter" },
