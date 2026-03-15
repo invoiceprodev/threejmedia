@@ -200,7 +200,7 @@ export function DomainSearchSection({ onOpenWizard }: { onOpenWizard?: () => voi
               Domain Search
             </div>
             <h2 className="mt-5 max-w-xl text-3xl font-extrabold tracking-tight text-gray-950 sm:text-4xl md:text-5xl">
-              Search your next domain name with live HostAfrica pricing.
+              Search your next domain name with live registrar pricing.
             </h2>
             <p className="mt-4 max-w-xl text-base leading-relaxed text-gray-600 sm:text-lg">
               Check availability instantly, compare extensions, and move straight into your website quote when you find

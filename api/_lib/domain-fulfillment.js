@@ -398,7 +398,7 @@ export async function handleDomainFulfillmentSubmitRequest(request, response, op
       signupReference: signup.signup_reference,
       update: {
         domain_fulfillment_status: "submitted_to_registrar",
-        domain_fulfillment_notes: "Domain registration was submitted to HostAfrica for processing.",
+        domain_fulfillment_notes: "Domain registration was submitted to the registrar for processing.",
         domain_fulfillment_completed_at: null,
       },
     });

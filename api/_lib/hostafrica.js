@@ -215,7 +215,7 @@ export async function hostAfricaRequest(pathname, { method = "GET", body } = {})
   const { apiBaseUrl, username, apiKey, configured } = getHostAfricaConfig();
 
   if (!configured) {
-    throw new Error("HostAfrica reseller credentials are not configured yet.");
+    throw new Error("Registrar reseller credentials are not configured yet.");
   }
 
   const url = `${apiBaseUrl.replace(/\/$/, "")}/${pathname.replace(/^\/+/, "")}`;
@@ -235,11 +235,11 @@ export async function hostAfricaRequest(pathname, { method = "GET", body } = {})
   }
 
   if (!response.ok) {
-    throw new Error(normalizeErrorMessage(payload, "HostAfrica request failed."));
+    throw new Error(normalizeErrorMessage(payload, "Registrar request failed."));
   }
 
   if (payload?.success === false) {
-    throw new Error(normalizeErrorMessage(payload, "HostAfrica rejected the request."));
+    throw new Error(normalizeErrorMessage(payload, "Registrar rejected the request."));
   }
 
   return payload;

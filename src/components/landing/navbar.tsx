@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
 import { NavbarAuthActions } from "@/components/landing/navbar-auth-actions";
 import { hasAuth0BrowserEnv } from "@/lib/env";
@@ -10,8 +9,6 @@ const navLinks = [
   { label: "Domains", href: "#domains" },
   { label: "Portfolio", href: "#portfolio" },
   { label: "Pricing", href: "#pricing" },
-  { label: "Newsletter", href: "#newsletter" },
-  { label: "Testimonials", href: "#testimonials" },
 ];
 
 export function Navbar() {
@@ -73,16 +70,9 @@ export function Navbar() {
             ))}
           </nav>
 
-          {/* Desktop CTA */}
+          {/* Desktop auth actions */}
           <div className="hidden md:flex items-center gap-3">
             <NavbarAuthActions />
-            <Button
-              size="sm"
-              onClick={() => handleScroll("#contact")}
-              className="bg-gray-900 text-white hover:bg-gray-700 border-0 font-semibold rounded-lg px-5"
-            >
-              Get Started
-            </Button>
           </div>
 
           {/* Mobile toggle */}
@@ -117,20 +107,13 @@ export function Navbar() {
                 {label}
               </button>
             ))}
-            <Button
-              onClick={() => handleScroll("#contact")}
-              className="mt-2 w-full bg-gray-900 text-white hover:bg-gray-700 font-semibold"
-            >
-              Get Started
-            </Button>
             {hasAuth0BrowserEnv && (
-              <Button
-                variant="outline"
+              <button
                 onClick={() => navigate("/dashboard")}
-                className="w-full border-gray-200 bg-transparent text-gray-900 hover:bg-gray-50"
+                className="mt-2 w-full rounded-lg border border-gray-200 bg-transparent px-4 py-2.5 text-sm font-medium text-gray-900 transition-colors hover:bg-gray-50"
               >
                 Dashboard
-              </Button>
+              </button>
             )}
           </div>
         </div>

@@ -86,7 +86,7 @@ export function DomainOrderDialog({ open, mode, domain, onOpenChange }: DomainOr
   const [confirmOrder, setConfirmOrder] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState(
-    "This places a live reseller order with HostAfrica, so review the domain, contacts, and nameservers carefully.",
+    "This places a live registrar order, so review the domain, contacts, and nameservers carefully.",
   );
   const [submitted, setSubmitted] = useState(false);
 
@@ -100,7 +100,7 @@ export function DomainOrderDialog({ open, mode, domain, onOpenChange }: DomainOr
       setConfirmOrder(false);
       setIsSubmitting(false);
       setSubmitted(false);
-      setMessage("This places a live reseller order with HostAfrica, so review the domain, contacts, and nameservers carefully.");
+      setMessage("This places a live registrar order, so review the domain, contacts, and nameservers carefully.");
     }
   }, [open]);
 
@@ -178,8 +178,8 @@ export function DomainOrderDialog({ open, mode, domain, onOpenChange }: DomainOr
               </DialogTitle>
               <DialogDescription className="text-sm leading-relaxed text-[#b7c0cf]">
                 {mode === "register"
-                  ? "We’ll submit this domain registration directly to HostAfrica with the details below."
-                  : "We’ll submit this domain transfer to HostAfrica once your current registrar unlocks the domain and provides the EPP code."}
+                  ? "We’ll submit this domain registration directly to our registrar with the details below."
+                  : "We’ll submit this domain transfer once your current registrar unlocks the domain and provides the EPP code."}
               </DialogDescription>
             </DialogHeader>
 
@@ -296,7 +296,7 @@ export function DomainOrderDialog({ open, mode, domain, onOpenChange }: DomainOr
                     />
                     <div className="space-y-1">
                       <Label htmlFor="confirm-live-order" className="text-sm font-semibold text-amber-950">
-                        I understand this places a live order with HostAfrica
+                        I understand this places a live order with the registrar
                       </Label>
                       <p className="text-sm leading-relaxed text-amber-900">
                         Double-check the domain name, contact details, and nameservers before submitting.
