@@ -79,12 +79,12 @@
   "scripts": {
     "dev": "vite",
     "dev:all": "node scripts/dev-all.mjs",
-    "dev:api:once": "node api/index.js",
+    "dev:api:once": "node server/index.js",
     "build": "tsc && vite build",
-    "dev:api": "node --watch api/index.js",
-    "start": "node api/index.js",
+    "dev:api": "node --watch server/index.js",
+    "start": "node server/index.js",
     "start:web": "vite preview",
-    "start:api": "node api/index.js",
+    "start:api": "node server/index.js",
     "refine": "refine"
   },
   "browserslist": {

@@ -879,8 +879,7 @@ export function BudgetWizard({ open, onClose }: BudgetWizardProps) {
   return (
     <Dialog open={open} onOpenChange={(v) => !v && handleClose()}>
       <DialogContent
-        className="max-w-2xl w-full p-0 gap-0 bg-gray-950 border border-white/10 rounded-2xl overflow-hidden flex flex-col [&>button]:hidden"
-        style={{ maxHeight: "min(90vh, 800px)" }}>
+        className="top-0 left-0 h-[100dvh] max-h-[100dvh] w-screen max-w-none translate-x-0 translate-y-0 gap-0 overflow-hidden rounded-none border border-white/10 bg-gray-950 p-0 sm:top-[50%] sm:left-[50%] sm:h-auto sm:max-h-[min(90dvh,800px)] sm:w-full sm:max-w-2xl sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-2xl flex min-h-0 flex-col [&>button]:hidden">
         <DialogTitle className="sr-only">Budget Wizard</DialogTitle>
 
         {/* Header */}
@@ -899,7 +898,7 @@ export function BudgetWizard({ open, onClose }: BudgetWizardProps) {
         </div>
 
         {/* Scrollable content */}
-        <div className="flex-1 overflow-y-auto px-5 py-6">
+        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-6 overscroll-contain">
           {step === 0 && <Step1 selected={websiteTypeId} onSelect={setWebsiteTypeId} />}
           {step === 1 && <Step2 selected={addonIds} onToggle={toggleAddon} />}
           {step === 2 && <Step3 selected={hostingPlanId} onSelect={setHostingPlanId} />}

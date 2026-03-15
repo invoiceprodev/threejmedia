@@ -1,7 +1,3 @@
-import { createServer } from "node:http";
-import { existsSync, readFileSync } from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
 import { handleHealthRequest, handleNewsletterRequest } from "./_lib/newsletter.js";
 import { handleSignupContinueRequest, handleSignupRequest } from "./_lib/signup.js";
 import { handlePaystackVerifyRequest } from "./_lib/paystack.js";
@@ -25,51 +21,18 @@ import {
   handleDomainTransferRequest,
 } from "./_lib/hostafrica.js";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const envFilePath = path.resolve(__dirname, "../.env");
-
-function loadLocalEnv() {
-  if (!existsSync(envFilePath)) {
-    return;
-  }
-
-  const lines = readFileSync(envFilePath, "utf8").split(/\r?\n/);
-
-  for (const line of lines) {
-    const trimmedLine = line.trim();
-
-    if (!trimmedLine || trimmedLine.startsWith("#")) {
-      continue;
-    }
-
-    const separatorIndex = trimmedLine.indexOf("=");
-
-    if (separatorIndex === -1) {
-      continue;
-    }
-
-    const key = trimmedLine.slice(0, separatorIndex).trim();
-    const value = trimmedLine.slice(separatorIndex + 1).trim();
-
-    if (!process.env[key]) {
-      process.env[key] = value;
-    }
-  }
+function getPathname(request) {
+  return new URL(request.url || "/", `http://${request.headers.host || "localhost"}`).pathname;
 }
 
-loadLocalEnv();
+export default async function handler(request, response) {
+  const pathname = getPathname(request);
 
-const port = Number(process.env.PORT || 3001);
-
-const server = createServer(async (request, response) => {
-  const url = new URL(request.url || "/", `http://${request.headers.host || "localhost"}`);
-
-  if (url.pathname === "/health") {
+  if (pathname === "/health") {
     return handleHealthRequest(request, response);
   }
 
-  if (url.pathname === "/api/newsletter") {
+  if (pathname === "/api/newsletter") {
     return handleNewsletterRequest(request, response, {
       supabaseUrl: process.env.SUPABASE_URL,
       serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
@@ -78,7 +41,7 @@ const server = createServer(async (request, response) => {
     });
   }
 
-  if (url.pathname === "/api/budget-quote") {
+  if (pathname === "/api/budget-quote") {
     return handleBudgetQuoteRequest(request, response, {
       supabaseUrl: process.env.SUPABASE_URL,
       serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
@@ -90,7 +53,7 @@ const server = createServer(async (request, response) => {
     });
   }
 
-  if (url.pathname === "/api/signup") {
+  if (pathname === "/api/signup") {
     return handleSignupRequest(request, response, {
       allowedOrigin: process.env.ALLOWED_ORIGIN,
       auth0Domain: process.env.AUTH0_DOMAIN,
@@ -105,7 +68,7 @@ const server = createServer(async (request, response) => {
     });
   }
 
-  if (url.pathname === "/api/signup/continue") {
+  if (pathname === "/api/signup/continue") {
     return handleSignupContinueRequest(request, response, {
       allowedOrigin: process.env.ALLOWED_ORIGIN,
       auth0Domain: process.env.AUTH0_DOMAIN,
@@ -119,7 +82,7 @@ const server = createServer(async (request, response) => {
     });
   }
 
-  if (url.pathname === "/api/paystack/verify") {
+  if (pathname === "/api/paystack/verify") {
     return handlePaystackVerifyRequest(request, response, {
       allowedOrigin: process.env.ALLOWED_ORIGIN,
       paystackSecretKey: process.env.PAYSTACK_SECRET_KEY,
@@ -129,7 +92,7 @@ const server = createServer(async (request, response) => {
     });
   }
 
-  if (url.pathname === "/api/me") {
+  if (pathname === "/api/me") {
     return handleMeRequest(request, response, {
       allowedOrigin: process.env.ALLOWED_ORIGIN,
       auth0Domain: process.env.AUTH0_DOMAIN,
@@ -141,73 +104,73 @@ const server = createServer(async (request, response) => {
     });
   }
 
-  if (url.pathname === "/api/domains/extensions") {
+  if (pathname === "/api/domains/extensions") {
     return handleDomainCatalogRequest(request, response, {
       allowedOrigin: process.env.ALLOWED_ORIGIN,
     });
   }
 
-  if (url.pathname === "/api/domains/lookup") {
+  if (pathname === "/api/domains/lookup") {
     return handleDomainLookupRequest(request, response, {
       allowedOrigin: process.env.ALLOWED_ORIGIN,
     });
   }
 
-  if (url.pathname === "/api/domains/register") {
+  if (pathname === "/api/domains/register") {
     return handleDomainRegisterRequest(request, response, {
       allowedOrigin: process.env.ALLOWED_ORIGIN,
     });
   }
 
-  if (url.pathname === "/api/domains/renew") {
+  if (pathname === "/api/domains/renew") {
     return handleDomainRenewRequest(request, response, {
       allowedOrigin: process.env.ALLOWED_ORIGIN,
     });
   }
 
-  if (url.pathname === "/api/domains/transfer") {
+  if (pathname === "/api/domains/transfer") {
     return handleDomainTransferRequest(request, response, {
       allowedOrigin: process.env.ALLOWED_ORIGIN,
     });
   }
 
-  if (url.pathname === "/api/domains/information") {
+  if (pathname === "/api/domains/information") {
     return handleDomainInformationRequest(request, response, {
       allowedOrigin: process.env.ALLOWED_ORIGIN,
     });
   }
 
-  if (url.pathname === "/api/domains/nameservers") {
+  if (pathname === "/api/domains/nameservers") {
     return handleDomainNameserversRequest(request, response, {
       allowedOrigin: process.env.ALLOWED_ORIGIN,
     });
   }
 
-  if (url.pathname === "/api/domains/lock") {
+  if (pathname === "/api/domains/lock") {
     return handleDomainLockRequest(request, response, {
       allowedOrigin: process.env.ALLOWED_ORIGIN,
     });
   }
 
-  if (url.pathname === "/api/domains/eppcode") {
+  if (pathname === "/api/domains/eppcode") {
     return handleDomainEppCodeRequest(request, response, {
       allowedOrigin: process.env.ALLOWED_ORIGIN,
     });
   }
 
-  if (url.pathname === "/api/domains/contact") {
+  if (pathname === "/api/domains/contact") {
     return handleDomainContactRequest(request, response, {
       allowedOrigin: process.env.ALLOWED_ORIGIN,
     });
   }
 
-  if (url.pathname === "/api/domains/dns") {
+  if (pathname === "/api/domains/dns") {
     return handleDomainDnsRequest(request, response, {
       allowedOrigin: process.env.ALLOWED_ORIGIN,
     });
   }
 
-  if (url.pathname === "/api/domain-fulfillment/onboarding") {
+  if (pathname === "/api/domain-fulfillment/onboarding") {
     return handleDomainFulfillmentOnboardingRequest(request, response, {
       allowedOrigin: process.env.ALLOWED_ORIGIN,
       auth0Domain: process.env.AUTH0_DOMAIN,
@@ -219,7 +182,7 @@ const server = createServer(async (request, response) => {
     });
   }
 
-  if (url.pathname === "/api/domain-fulfillment/submit") {
+  if (pathname === "/api/domain-fulfillment/submit") {
     return handleDomainFulfillmentSubmitRequest(request, response, {
       allowedOrigin: process.env.ALLOWED_ORIGIN,
       supabaseUrl: process.env.SUPABASE_URL,
@@ -231,8 +194,4 @@ const server = createServer(async (request, response) => {
 
   response.writeHead(404, { "Content-Type": "application/json" });
   response.end(JSON.stringify({ message: "Not found." }));
-});
-
-server.listen(port, () => {
-  console.log(`Three J Media API listening on port ${port}`);
-});
+}
