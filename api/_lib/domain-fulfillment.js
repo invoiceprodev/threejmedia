@@ -108,16 +108,7 @@ async function fetchSignupForFulfillment({ supabaseUrl, serviceRoleKey, table, s
   const payload = await response.json().catch(() => null);
 
   if (!response.ok) {
-    const details =
-      typeof payload?.message === "string"
-        ? payload.message
-        : typeof payload?.error_description === "string"
-          ? payload.error_description
-          : typeof payload?.error === "string"
-            ? payload.error
-            : null;
-
-    throw new Error(details ? `Unable to load the fulfillment signup. ${details}` : "Unable to load the fulfillment signup.");
+    throw new Error("Unable to load the fulfillment signup.");
   }
 
   return Array.isArray(payload) ? payload[0] ?? null : null;

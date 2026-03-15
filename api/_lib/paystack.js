@@ -55,6 +55,23 @@ function getFulfillmentUpdate(paymentStatus) {
   };
 }
 
+function normalizeStoredDomainSelection(metadata) {
+  const name = String(metadata?.selected_domain_name || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9-]/g, "");
+  const extension = String(metadata?.selected_domain_extension || "").trim().toLowerCase();
+  const full = String(metadata?.selected_domain_full || "").trim().toLowerCase();
+  const years = Number(metadata?.domain_registration_years || 1);
+
+  return {
+    selected_domain_name: name || null,
+    selected_domain_extension: extension || null,
+    selected_domain_full: full || (name && extension ? `${name}${extension}` : null),
+    domain_registration_years: Number.isFinite(years) && years > 0 ? years : 1,
+  };
+}
+
 async function updateSignupRecord({ supabaseUrl, serviceRoleKey, table, paymentReference, update }) {
   const response = await fetch(
     `${supabaseUrl}/rest/v1/${table}?payment_reference=eq.${encodeURIComponent(paymentReference)}`,
@@ -132,6 +149,7 @@ export async function handlePaystackVerifyRequest(request, response, options) {
     const domainAutoRenewAt =
       paymentStatus === "success" ? addYearsIsoDate(domainRegistrationStartsAt, registrationYears) : null;
     const fulfillmentUpdate = getFulfillmentUpdate(paymentStatus);
+    const storedDomain = normalizeStoredDomainSelection(metadata);
 
     const signup = await updateSignupRecord({
       supabaseUrl,
@@ -143,6 +161,14 @@ export async function handlePaystackVerifyRequest(request, response, options) {
         auth0_user_id: metadata.auth0_user_id || null,
         domain_registration_starts_at: domainRegistrationStartsAt,
         domain_auto_renew_at: domainAutoRenewAt,
+        ...(storedDomain.selected_domain_full
+          ? {
+              selected_domain_name: storedDomain.selected_domain_name,
+              selected_domain_extension: storedDomain.selected_domain_extension,
+              selected_domain_full: storedDomain.selected_domain_full,
+              domain_registration_years: storedDomain.domain_registration_years,
+            }
+          : {}),
         ...fulfillmentUpdate,
       },
     });

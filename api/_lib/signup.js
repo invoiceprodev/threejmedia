@@ -48,6 +48,22 @@ function normalizeDomainSelection(domainName, domainExtension) {
   };
 }
 
+function getStoredDomainSelection(record) {
+  const name = normalizeDomainLabel(record?.selected_domain_name);
+  const extension = String(record?.selected_domain_extension || "").trim().toLowerCase();
+  const fullFromParts =
+    name && extension && supportedDomainExtensions.has(extension) ? `${name}${extension}` : "";
+  const full = normalizeDomainLabel(record?.selected_domain_full) || fullFromParts;
+  const years = Number(record?.domain_registration_years || 1);
+
+  return {
+    name,
+    extension,
+    full,
+    years: Number.isFinite(years) && years > 0 ? years : 1,
+  };
+}
+
 function maskEmailForLog(email) {
   const normalized = String(email || "").trim().toLowerCase();
 
@@ -585,13 +601,15 @@ export async function handleSignupContinueRequest(request, response, options) {
       plan,
       callbackUrl: paystackCallbackUrl,
       metadata: {
+        ...getStoredDomainSelection(pendingSignup),
         signup_reference: pendingSignup.signup_reference,
         auth0_email: pendingSignup.email || identity.email,
         auth0_user_id: pendingSignup.auth0_user_id || identity.auth0UserId,
         plan_id: plan.id,
-        selected_domain_full: pendingSignup.selected_domain_full || null,
       },
     });
+
+    const selectedDomain = getStoredDomainSelection(pendingSignup);
 
     await updateSignupRecordByReference({
       supabaseUrl,
@@ -602,6 +620,14 @@ export async function handleSignupContinueRequest(request, response, options) {
         payment_reference: paystackTransaction.reference,
         payment_status: "initialized",
         auth0_user_id: pendingSignup.auth0_user_id || identity.auth0UserId,
+        ...(selectedDomain.name
+          ? {
+              selected_domain_name: selectedDomain.name,
+              selected_domain_extension: selectedDomain.extension,
+              selected_domain_full: selectedDomain.full,
+              domain_registration_years: selectedDomain.years,
+            }
+          : {}),
       },
     });
 
