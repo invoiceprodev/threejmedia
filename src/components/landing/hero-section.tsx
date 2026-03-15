@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
+import { services } from "@/components/landing/services-section";
 
 const slides = [
   {
@@ -18,6 +19,10 @@ const slides = [
     subheading:
       "From landing pages to full business websites, we build digital experiences that attract visitors and turn them into paying clients.",
   },
+  ...services.map((service) => ({
+    heading: service.title,
+    subheading: service.description,
+  })),
 ];
 
 const AUTOPLAY_INTERVAL = 4500;

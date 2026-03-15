@@ -1,7 +1,7 @@
 import { Monitor, Server, Wrench, LayoutTemplate } from "lucide-react";
 import { useScrollAnimation } from "@/hooks/use-scroll-animation";
 
-const services = [
+export const services = [
   {
     icon: Monitor,
     title: "Web Design",
