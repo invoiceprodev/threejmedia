@@ -11,6 +11,8 @@ export type BlogPost = {
   publishedAt: string;
   readTime: string;
   category: string;
+  author: string;
+  tags: string[];
   featured?: boolean;
   sections: BlogPostSection[];
 };
@@ -19,6 +21,9 @@ export type BlogPreview = {
   title: string;
   excerpt: string;
   category: string;
+  author: string;
+  publishedAt: string;
+  tags: string[];
   status: "coming-soon";
 };
 
@@ -31,6 +36,8 @@ export const blogPosts: BlogPost[] = [
     publishedAt: "2026-03-15",
     readTime: "5 min read",
     category: "Brand Strategy",
+    author: "Jerry Mokoena",
+    tags: ["Websites", "Branding", "Digital Growth"],
     featured: true,
     sections: [
       {
@@ -141,6 +148,9 @@ export const blogPreviews: BlogPreview[] = [
     excerpt:
       "A practical look at the pages, tools, and launch decisions that matter most when you're building your first business site.",
     category: "Startups",
+    author: "Jerry Mokoena",
+    publishedAt: "2026-03-18",
+    tags: ["Launch", "Startups"],
     status: "coming-soon",
   },
   {
@@ -148,6 +158,9 @@ export const blogPreviews: BlogPreview[] = [
     excerpt:
       "The design, messaging, and trust signals that make visitors take your brand seriously from the first scroll.",
     category: "Web Design",
+    author: "Jerry Mokoena",
+    publishedAt: "2026-03-22",
+    tags: ["Design", "Trust"],
     status: "coming-soon",
   },
   {
@@ -155,6 +168,9 @@ export const blogPreviews: BlogPreview[] = [
     excerpt:
       "Social reach is helpful, but ownership gives creators stability, search visibility, and room to grow beyond one platform.",
     category: "Creators",
+    author: "Jerry Mokoena",
+    publishedAt: "2026-03-26",
+    tags: ["Creators", "Ownership"],
     status: "coming-soon",
   },
   {
@@ -162,6 +178,9 @@ export const blogPreviews: BlogPreview[] = [
     excerpt:
       "A straightforward guide to picking a domain that feels trustworthy, memorable, and ready for long-term growth.",
     category: "Domains",
+    author: "Jerry Mokoena",
+    publishedAt: "2026-03-29",
+    tags: ["Domains", "Branding"],
     status: "coming-soon",
   },
 ];
@@ -172,4 +191,8 @@ export function getFeaturedBlogPost() {
 
 export function getBlogPostBySlug(slug: string) {
   return blogPosts.find((post) => post.slug === slug);
+}
+
+export function getRelatedBlogPosts(slug: string, limit = 2) {
+  return blogPosts.filter((post) => post.slug !== slug).slice(0, limit);
 }

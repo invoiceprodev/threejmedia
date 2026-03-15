@@ -52,11 +52,22 @@ export default function BlogPage() {
               </h2>
               <p className="mt-5 max-w-3xl text-base leading-relaxed text-gray-600 sm:text-lg">{featuredPost.excerpt}</p>
               <div className="mt-6 flex flex-wrap items-center gap-4 text-sm text-gray-500">
+                <span className="font-medium text-gray-700">{featuredPost.author}</span>
                 <span>{formatBlogDate(featuredPost.publishedAt)}</span>
                 <span className="inline-flex items-center gap-2">
                   <Clock3 className="h-4 w-4" />
                   {featuredPost.readTime}
                 </span>
+              </div>
+              <div className="mt-4 flex flex-wrap gap-2">
+                {featuredPost.tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="rounded-full border border-[#83c406]/25 bg-[#83c406]/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-[#5d8f00]"
+                  >
+                    {tag}
+                  </span>
+                ))}
               </div>
               <Button
                 onClick={() => navigate(`/blog/${featuredPost.slug}`)}
@@ -68,6 +79,15 @@ export default function BlogPage() {
             </div>
 
             <div className="border-t border-black/10 bg-[#f4f2ea] px-6 py-8 sm:px-8 lg:border-l lg:border-t-0">
+              <div className="mb-6 overflow-hidden rounded-[1.5rem] border border-black/8 bg-[radial-gradient(circle_at_top_left,_rgba(131,196,6,0.22),_transparent_42%),linear-gradient(135deg,_#ffffff_0%,_#eef4de_100%)] p-5">
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="h-16 rounded-2xl bg-white/80 shadow-sm" />
+                  <div className="h-16 rounded-2xl bg-[#dff3ab]/80 shadow-sm" />
+                  <div className="h-16 rounded-2xl bg-white/80 shadow-sm" />
+                  <div className="col-span-2 h-20 rounded-2xl bg-gray-950/85" />
+                  <div className="h-20 rounded-2xl bg-white/85" />
+                </div>
+              </div>
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">What you'll find here</p>
               <div className="mt-5 space-y-4">
                 {[
@@ -92,7 +112,7 @@ export default function BlogPage() {
             </div>
           </div>
 
-          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+          <div className="grid gap-5 md:grid-cols-2">
             {blogPreviews.map((preview) => (
               <article
                 key={preview.title}
@@ -101,6 +121,20 @@ export default function BlogPage() {
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#5d8f00]">{preview.category}</p>
                 <h3 className="mt-4 text-xl font-extrabold tracking-tight text-gray-950">{preview.title}</h3>
                 <p className="mt-4 flex-1 text-sm leading-relaxed text-gray-600">{preview.excerpt}</p>
+                <div className="mt-6 flex flex-wrap items-center gap-3 text-sm text-gray-500">
+                  <span className="font-medium text-gray-700">{preview.author}</span>
+                  <span>{formatBlogDate(preview.publishedAt)}</span>
+                </div>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {preview.tags.map((tag) => (
+                    <span
+                      key={tag}
+                      className="rounded-full border border-black/10 bg-gray-100 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-600"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
                 <div className="mt-6 inline-flex items-center text-sm font-semibold text-gray-400">Coming soon</div>
               </article>
             ))}
