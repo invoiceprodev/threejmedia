@@ -1,7 +1,7 @@
 # Three J Media
 
 Frontend: Vite + React
-API: Railway-ready Node service in `api/`
+API: Railway-ready Node service in `server/` with route handlers in `api/_lib/`
 Database: Supabase Postgres
 
 ## Local setup
@@ -47,12 +47,12 @@ Database: Supabase Postgres
 7. The frontend dev server runs directly through Vite on `http://127.0.0.1:5173` for predictable local module serving.
 8. For local frontend testing, leave `VITE_API_BASE_URL` empty so Vite proxies `/api/*` and `/health` to `http://localhost:3001` without browser CORS issues.
 9. To serve marketing images from Cloudinary, upload the files with their current names such as `threejmedia_logo.png` and `portfolio-1.png`, then set `VITE_CLOUDINARY_CLOUD_NAME` and optionally `VITE_CLOUDINARY_FOLDER`.
-10. If you prefer another CDN or storage provider, set `VITE_IMAGE_BASE_URL` to that folder URL instead. If both are blank, the app falls back to the bundled local images.
+10. If you prefer another CDN or storage provider, set `VITE_IMAGE_BASE_URL` to that folder URL instead. If both are blank, the app falls back to the hosted Cloudinary asset URLs defined in the app.
 
 ## Railway setup
 
 1. Create a new Railway service from this repo.
-2. Railway will use [`railway.json`](/Users/jerry/Desktop/threejmedia.co.za/railway.json) and start `node api/index.js`.
+2. Railway will use [`railway.json`](/Users/jerry/Desktop/threejmedia.co.za/railway.json) and start `node server/index.js`.
 3. Add these Railway variables:
    - `SUPABASE_URL`
    - `SUPABASE_SERVICE_ROLE_KEY`
