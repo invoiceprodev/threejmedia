@@ -8,6 +8,8 @@ const auth0Audience = import.meta.env.VITE_AUTH0_AUDIENCE?.trim();
 const imageBaseUrl = import.meta.env.VITE_IMAGE_BASE_URL?.trim();
 const cloudinaryCloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME?.trim();
 const cloudinaryFolder = import.meta.env.VITE_CLOUDINARY_FOLDER?.trim();
+const whatsappNumber = import.meta.env.VITE_WHATSAPP_NUMBER?.trim();
+const whatsappMessage = import.meta.env.VITE_WHATSAPP_MESSAGE?.trim();
 
 function normalizePathSegment(value: string | undefined) {
   return value ? value.replace(/^\/+|\/+$/g, "") : "";
@@ -30,6 +32,10 @@ export const env = {
     clientId: auth0ClientId ?? "",
     audience: auth0Audience ?? "",
   },
+  whatsapp: {
+    number: whatsappNumber ? whatsappNumber.replace(/[^\d]/g, "") : "",
+    message: whatsappMessage ?? "Hi Three J Media, I'd like help with my website or domain setup.",
+  },
 };
 
 export const apiRoutes = {
@@ -43,3 +49,4 @@ export const apiRoutes = {
 
 export const hasSupabaseBrowserEnv = Boolean(env.supabase.url && env.supabase.anonKey);
 export const hasAuth0BrowserEnv = Boolean(env.auth0.domain && env.auth0.clientId);
+export const hasWhatsAppBrowserEnv = Boolean(env.whatsapp.number);

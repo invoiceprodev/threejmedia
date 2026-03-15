@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { useAuth0 } from "@auth0/auth0-react";
-import { Building2, CreditCard, LoaderCircle, LogOut, ShieldCheck, Sparkles } from "lucide-react";
+import { Building2, CreditCard, LoaderCircle, LogOut, MessageCircle, ShieldCheck, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { hasAuth0BrowserEnv } from "@/lib/env";
+import { hasAuth0BrowserEnv, hasWhatsAppBrowserEnv } from "@/lib/env";
 import { apiFetch } from "@/lib/api-client";
 import { navigate } from "@/lib/navigation";
+import { getWhatsAppUrl } from "@/lib/whatsapp";
 
 type DashboardPayload = {
   email: string;
@@ -27,6 +28,9 @@ type DashboardPayload = {
 
 export default function DashboardPage() {
   const { isAuthenticated, isLoading, loginWithRedirect, logout, getAccessTokenSilently, getIdTokenClaims, user } = useAuth0();
+  const whatsappUrl = getWhatsAppUrl(
+    "Hi Three J Media, I need help with my account, domain, or project setup.",
+  );
   const [profile, setProfile] = useState<DashboardPayload | null>(null);
   const [status, setStatus] = useState<"idle" | "loading" | "error">("idle");
   const [message, setMessage] = useState("");
@@ -155,6 +159,18 @@ export default function DashboardPage() {
           </div>
 
           <div className="flex gap-3">
+            {hasWhatsAppBrowserEnv && (
+              <Button
+                variant="outline"
+                asChild
+                className="h-11 rounded-xl border-[#25D366]/35 bg-transparent text-[#dcffe8] hover:bg-[#25D366]/10"
+              >
+                <a href={whatsappUrl} target="_blank" rel="noreferrer">
+                  <MessageCircle className="mr-2 h-4 w-4" />
+                  WhatsApp
+                </a>
+              </Button>
+            )}
             <Button
               variant="outline"
               onClick={() => navigate("/")}

@@ -5,6 +5,7 @@ import DashboardPage from "@/pages/dashboard";
 import PaymentSuccessPage from "@/pages/payment-success";
 import AuthCallbackPage from "@/pages/auth-callback";
 import SignupContinuePage from "@/pages/signup-continue";
+import { LegalPage, legalDocuments } from "@/pages/legal";
 
 function App() {
   const [pathname, setPathname] = useState(() => window.location.pathname);
@@ -29,6 +30,8 @@ function App() {
     page = <AuthCallbackPage />;
   } else if (pathname === "/signup/continue") {
     page = <SignupContinuePage />;
+  } else if (pathname in legalDocuments) {
+    page = <LegalPage pathname={pathname} />;
   }
 
   return <Auth0ShellProvider>{page}</Auth0ShellProvider>;

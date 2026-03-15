@@ -1,7 +1,11 @@
 import { Button } from "@/components/ui/button";
-import { ArrowRight, LayoutGrid } from "lucide-react";
+import { ArrowRight, LayoutGrid, MessageCircle } from "lucide-react";
+import { getWhatsAppUrl } from "@/lib/whatsapp";
+import { hasWhatsAppBrowserEnv } from "@/lib/env";
 
 export function CTASection() {
+  const whatsappUrl = getWhatsAppUrl();
+
   const handleScroll = (href: string) => {
     const el = document.querySelector(href);
     if (el) el.scrollIntoView({ behavior: "smooth" });
@@ -59,6 +63,20 @@ export function CTASection() {
             <LayoutGrid className="mr-2 w-4 h-4 opacity-70 group-hover:opacity-100 transition-opacity" />
             View Pricing
           </Button>
+
+          {hasWhatsAppBrowserEnv && (
+            <Button
+              size="lg"
+              variant="outline"
+              asChild
+              className="group w-full sm:w-auto border border-[#25D366]/45 bg-transparent text-[#bff5d2] transition-all duration-300 hover:bg-[#25D366]/12 hover:text-[#dcffe8] px-8 md:px-10 text-base min-h-[44px] h-12 md:h-14 rounded-xl"
+            >
+              <a href={whatsappUrl} target="_blank" rel="noreferrer">
+                <MessageCircle className="mr-2 w-4 h-4 opacity-80 transition-transform duration-200 group-hover:scale-110" />
+                Chat on WhatsApp
+              </a>
+            </Button>
+          )}
         </div>
 
         {/* Trust indicators */}
