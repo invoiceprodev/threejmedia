@@ -164,7 +164,9 @@ export function DomainOrderDialog({ open, mode, domain, onOpenChange }: DomainOr
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="h-[94vh] w-[50vw] max-w-[50vw] sm:max-w-[50vw] overflow-y-auto rounded-[32px] border-none bg-[#f8f4ea] p-0 shadow-[0_30px_120px_rgba(15,23,42,0.25)]">
+      <DialogContent
+        mobileFullScreen
+        className="overflow-y-auto bg-[#f8f4ea] p-0 shadow-[0_30px_120px_rgba(15,23,42,0.25)] sm:h-[94vh] sm:w-[50vw] sm:max-w-[50vw] sm:rounded-[32px] sm:border-none">
         <div className="grid min-h-full gap-0 lg:grid-cols-[0.72fr_1.28fr]">
           <div className="bg-[#111827] px-6 py-8 text-white sm:px-8">
             <div className="inline-flex rounded-full border border-[#83c406]/35 bg-[#83c406]/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-[#dff3ab]">

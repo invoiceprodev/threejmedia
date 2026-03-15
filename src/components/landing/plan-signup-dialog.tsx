@@ -218,7 +218,8 @@ export function PlanSignupDialog({ open, planId, onOpenChange }: PlanSignupDialo
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent
-        className="h-[94vh] w-[50vw] max-w-[50vw] sm:max-w-[50vw] overflow-y-auto rounded-[2rem] border border-gray-200 bg-white p-0 shadow-2xl"
+        mobileFullScreen
+        className="overflow-y-auto border-gray-200 bg-white p-0 shadow-2xl sm:h-[94vh] sm:w-[50vw] sm:max-w-[50vw] sm:rounded-[2rem] sm:border"
         showCloseButton={status !== "submitting"}>
         <div className="grid min-h-full lg:grid-cols-[0.82fr_1.18fr]">
           <div className="bg-gray-950 px-6 py-8 sm:px-8 sm:py-10">
