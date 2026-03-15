@@ -1,9 +1,3 @@
-import localLogo from "../../images/threejmedia_logo.png";
-import localPortfolioOne from "../../images/portfolio-1.png";
-import localPortfolioTwo from "../../images/portfolio-2.png";
-import localPortfolioThree from "../../images/portfolio-3.png";
-import localPortfolioFour from "../../images/portfolio-4.png";
-import localPortfolioFive from "../../images/portfolio-5.png";
 import { env } from "./env";
 
 const cloudinaryAssetUrls = {
@@ -39,20 +33,20 @@ function resolveHostedImage(filename: string, fallback: string) {
 }
 
 export const imageAssets = {
-  logo: env.cloudinary.cloudName ? cloudinaryAssetUrls.logo : resolveHostedImage("threejmedia_logo.png", localLogo),
+  logo: env.cloudinary.cloudName ? cloudinaryAssetUrls.logo : resolveHostedImage("threejmedia_logo.png", cloudinaryAssetUrls.logo),
   portfolioOne: env.cloudinary.cloudName
     ? cloudinaryAssetUrls.portfolioOne
-    : resolveHostedImage("portfolio-1.png", localPortfolioOne),
+    : resolveHostedImage("portfolio-1.png", cloudinaryAssetUrls.portfolioOne),
   portfolioTwo: env.cloudinary.cloudName
     ? cloudinaryAssetUrls.portfolioTwo
-    : resolveHostedImage("portfolio-2.png", localPortfolioTwo),
+    : resolveHostedImage("portfolio-2.png", cloudinaryAssetUrls.portfolioTwo),
   portfolioThree: env.cloudinary.cloudName
     ? cloudinaryAssetUrls.portfolioThree
-    : resolveHostedImage("portfolio-3.png", localPortfolioThree),
+    : resolveHostedImage("portfolio-3.png", cloudinaryAssetUrls.portfolioThree),
   portfolioFour: env.cloudinary.cloudName
     ? cloudinaryAssetUrls.portfolioFour
-    : resolveHostedImage("portfolio-4.png", localPortfolioFour),
+    : resolveHostedImage("portfolio-4.png", cloudinaryAssetUrls.portfolioFour),
   portfolioFive: env.cloudinary.cloudName
     ? cloudinaryAssetUrls.portfolioFive
-    : resolveHostedImage("portfolio-5.png", localPortfolioFive),
+    : resolveHostedImage("portfolio-5.png", cloudinaryAssetUrls.portfolioFive),
 };

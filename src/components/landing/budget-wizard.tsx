@@ -879,7 +879,7 @@ export function BudgetWizard({ open, onClose }: BudgetWizardProps) {
   return (
     <Dialog open={open} onOpenChange={(v) => !v && handleClose()}>
       <DialogContent
-        className="!top-0 !left-0 !h-[100dvh] !max-h-[100dvh] !w-screen !max-w-none !translate-x-0 !translate-y-0 gap-0 overflow-hidden !rounded-none border border-white/10 bg-gray-950 !p-0 sm:!top-[50%] sm:!left-[50%] sm:!h-auto sm:!max-h-[min(90dvh,800px)] sm:!w-full sm:!max-w-2xl sm:!-translate-x-1/2 sm:!-translate-y-1/2 sm:!rounded-2xl flex min-h-0 flex-col [&>button]:hidden">
+        className="!inset-x-0 !top-0 !h-[100dvh] !max-h-[100dvh] !w-auto !max-w-none !translate-x-0 !translate-y-0 gap-0 overflow-hidden !rounded-none border-0 bg-gray-950 !p-0 sm:!top-[50%] sm:!left-[50%] sm:!right-auto sm:!h-auto sm:!max-h-[min(90dvh,800px)] sm:!w-full sm:!max-w-2xl sm:!border sm:border-white/10 sm:!-translate-x-1/2 sm:!-translate-y-1/2 sm:!rounded-2xl flex min-h-0 flex-col [&>button]:hidden">
         <DialogTitle className="sr-only">Budget Wizard</DialogTitle>
 
         {/* Header */}
