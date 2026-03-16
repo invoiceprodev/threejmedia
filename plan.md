@@ -9,10 +9,25 @@ A modern, premium, conversion-focused landing page for a South African web desig
 - HostAfrica reseller integration is now wired for live TLD pricing, domain lookup, registration, and transfer flows.
 - Landing page includes a customer-facing domain search section backed by the reseller API.
 - Domain order dialog supports dry-run validation before any live HostAfrica order is submitted.
+- First admin workspace is now implemented at `/admin` and can become the home page for `admin.threejmedia.co.za`.
+- Admin stage 1 currently reads live signup and payment records from Supabase, protects access with Auth0, and restricts entry by `ADMIN_ALLOWED_EMAILS`.
 - Mobile dialog width issues have been fixed across the budget wizard, plan signup, and domain order flows.
 - Follow-up UI task: revisit the domain order dialog width and input layout on desktop, as the popup still feels a bit narrow for comfortable entry on some screen sizes.
 - Follow-up backend task for tomorrow: debug `POST /api/domain-fulfillment/submit` on Railway. Current `curl` request shape is correct, but `https://api.threejmedia.co.za/api/domain-fulfillment/submit` returned `502 Application failed to respond` during deployment/runtime verification.
 - Tomorrow checks: confirm Railway deploy completed, verify `/health`, verify `DOMAIN_FULFILLMENT_ADMIN_TOKEN` is present in Railway, inspect Railway logs for the fulfillment submit route, then retry the dry run with `uifmasters.co.za`.
+
+## Next Product Stage
+
+- Phase 5 should expand the admin workspace into proper business operations resources:
+  - clients
+  - invoices
+  - subscriptions
+  - client notes
+  - settings
+- Recommended implementation path:
+  - add dedicated Supabase tables instead of deriving everything from `client_signups`
+  - expose protected admin CRUD endpoints from the Railway API
+  - evolve `/admin` into the primary operations surface for `admin.threejmedia.co.za`
 
 <phase number="1" title="Core Landing Page – Hero, Services, Pricing & Footer">
 

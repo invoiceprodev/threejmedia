@@ -26,11 +26,12 @@ Database: Supabase Postgres
 | `SUPABASE_NEWSLETTER_TABLE` | Railway / server | Supabase table name for newsletter signups |
 | `SUPABASE_SIGNUPS_TABLE` | Railway / server | Supabase table name for plan signup and payment records |
 | `SUPABASE_BUDGET_QUOTES_TABLE` | Railway / server | Supabase table name for budget CTA quote requests |
-| `ALLOWED_ORIGIN` | Railway / server | Frontend origins allowed to call the API. Use a comma-separated list such as `http://localhost:5173,https://threejmedia.co.za` |
+| `ALLOWED_ORIGIN` | Railway / server | Frontend origins allowed to call the API. Use a comma-separated list such as `http://localhost:5173,https://threejmedia.co.za,https://admin.threejmedia.co.za` |
 | `AUTH0_DOMAIN` | Railway / server | Auth0 tenant domain used for database-connection signup |
 | `AUTH0_CLIENT_ID` | Railway / server | Auth0 application client ID used for signup and server-side ID token verification |
 | `AUTH0_CONNECTION` | Railway / server | Auth0 database connection name |
 | `AUTH0_AUDIENCE` | Railway / server | Auth0 API audience expected by protected Railway endpoints |
+| `ADMIN_ALLOWED_EMAILS` | Railway / server | Comma-separated Auth0 email addresses allowed to open the admin workspace |
 | `PAYSTACK_PUBLIC_KEY` | Railway / server | Paystack public key for future frontend payment tooling |
 | `PAYSTACK_SECRET_KEY` | Railway / server | Paystack secret key used to initialize transactions |
 | `PAYSTACK_CALLBACK_URL` | Railway / server | Return URL after Paystack checkout completes |
@@ -63,6 +64,7 @@ Database: Supabase Postgres
    - `AUTH0_CLIENT_ID`
    - `AUTH0_CONNECTION`
    - `AUTH0_AUDIENCE`
+   - `ADMIN_ALLOWED_EMAILS`
    - `PAYSTACK_SECRET_KEY`
    - `PAYSTACK_CALLBACK_URL`
    - `RESEND_API_KEY`
@@ -70,11 +72,31 @@ Database: Supabase Postgres
    - `RESEND_BUDGET_QUOTES_TO`
    - `DOMAIN_FULFILLMENT_ADMIN_TOKEN`
    - `PORT`
-4. Set `ALLOWED_ORIGIN` to your deployed frontend URL, for example `https://threejmedia.co.za`.
+4. Set `ALLOWED_ORIGIN` to your deployed frontend URLs, for example `https://threejmedia.co.za,https://admin.threejmedia.co.za`.
 5. In the Paystack dashboard, set:
    - Callback URL: `https://threejmedia.co.za/payment/success`
    - Webhook URL: `https://api.threejmedia.co.za/api/paystack/webhook`
 6. Paystack signs webhook requests with your live secret key, so `PAYSTACK_SECRET_KEY` must match the live dashboard account.
+
+## Admin rollout
+
+The first admin stage is available at `/admin` today and is intended to become the home page for `https://admin.threejmedia.co.za`.
+
+What it includes right now:
+- protected admin sign-in with Auth0
+- allowlist-based access using `ADMIN_ALLOWED_EMAILS`
+- live overview data from Supabase signup and Paystack-linked records
+- client, subscription, renewal, and readiness views for business operations
+
+What to configure before using the subdomain:
+1. Point `admin.threejmedia.co.za` to the frontend deployment.
+2. Add `https://admin.threejmedia.co.za` to `ALLOWED_ORIGIN` on Railway.
+3. Add `https://admin.threejmedia.co.za` to Auth0 Allowed Logout URLs and Allowed Web Origins.
+4. Add your own admin email address to `ADMIN_ALLOWED_EMAILS`.
+5. Keep `VITE_API_BASE_URL` pointed at the working API base URL.
+
+Current limitation:
+- invoice records, internal notes, and subscription management actions are not separate resources yet; the admin view currently derives its first dashboard from the live signup table.
 
 ## Auth0 settings
 
@@ -83,12 +105,15 @@ Use a SPA application for the frontend login flow and a regular Auth0 API identi
 - Allowed Callback URLs:
   - `http://localhost:5173/auth/callback`
   - `https://threejmedia.co.za/auth/callback`
+  - `https://admin.threejmedia.co.za/auth/callback`
 - Allowed Logout URLs:
   - `http://localhost:5173`
   - `https://threejmedia.co.za`
+  - `https://admin.threejmedia.co.za`
 - Allowed Web Origins:
   - `http://localhost:5173`
   - `https://threejmedia.co.za`
+  - `https://admin.threejmedia.co.za`
 - `AUTH0_CONNECTION` should match your Auth0 database connection name
 - `AUTH0_AUDIENCE` and `VITE_AUTH0_AUDIENCE` should match your Auth0 API Identifier
 - `AUTH0_CLIENT_ID` on Railway should match the SPA application client ID used by the frontend so the API can verify Auth0 ID tokens safely
@@ -110,10 +135,13 @@ Use a SPA application for the frontend login flow and a regular Auth0 API identi
 - `GET /api/paystack/verify`
 - `POST /api/paystack/webhook`
 - `GET /api/me`
+- `GET /api/admin/overview`
 - `POST /api/domain-fulfillment/onboarding`
 - `POST /api/domain-fulfillment/submit`
 
 The newsletter form now posts to `VITE_API_BASE_URL/api/newsletter` and stores subscribers in Supabase. The budget CTA posts to `VITE_API_BASE_URL/api/budget-quote` and stores custom quote requests in Supabase. Pricing signups now post to `VITE_API_BASE_URL/api/signup`, create an Auth0 user, and store the signup in a pending verification state. After the client confirms their email address, the app calls `POST /api/signup/continue` to initialize Paystack checkout. After Paystack returns, `/payment/success` verifies the transaction, and Paystack webhooks also sync the payment server-to-server so successful payments are not dependent on the browser returning. The protected `/dashboard` uses Auth0 access tokens against `GET /api/me`.
+
+The first admin stage is now available at `/admin`, and the same view can be used as the home page for `https://admin.threejmedia.co.za`. It uses `GET /api/admin/overview`, verifies the Auth0 access token and ID token, checks `ADMIN_ALLOWED_EMAILS`, and then pulls live signup and payment data from Supabase for business operations. The current workspace is intentionally focused on operational visibility first so invoicing, notes, subscription actions, and settings can be added as dedicated resources next.
 
 For managed domain fulfillment:
 - the customer submits registrant and nameserver details through `POST /api/domain-fulfillment/onboarding`
