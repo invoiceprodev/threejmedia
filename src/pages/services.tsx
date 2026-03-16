@@ -54,6 +54,20 @@ export default function ServicesPage() {
     description:
       "Explore website design, hosting, domain registration, blog platforms, and personal brand website services from Three J Media.",
     path: "/services",
+    structuredData: {
+      "@context": "https://schema.org",
+      "@type": "Service",
+      serviceType: "Web design, hosting, domains, and content platforms",
+      provider: {
+        "@type": "Organization",
+        name: "Three J Media",
+        url: "https://threejmedia.co.za/",
+      },
+      areaServed: "South Africa",
+      url: "https://threejmedia.co.za/services",
+      description:
+        "Explore website design, hosting, domain registration, blog platforms, and personal brand website services from Three J Media.",
+    },
   });
 
   return (

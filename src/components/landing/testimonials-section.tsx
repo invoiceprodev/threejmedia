@@ -13,8 +13,8 @@ const testimonials = [
   {
     quote:
       "Professional, fast and genuinely invested in our growth. Three J Media delivered beyond our expectations — and on time.",
-    name: "Sipho Mokoena",
-    role: "CEO, Mokoena Consulting",
+    name: "Sipho Sibeko",
+    role: "CEO, Sibeko Consulting",
     avatar:
       "https://images.unsplash.com/photo-1506277886164-e25aa3f4ef7f?w=100&h=100&fit=crop&crop=face",
   },

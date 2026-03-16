@@ -24,6 +24,19 @@ export default function LandingPage() {
     description:
       "Three J Media builds websites, manages domains, and provides hosting and launch support for South African businesses ready to grow online.",
     path: "/",
+    structuredData: {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      name: "Three J Media",
+      url: "https://threejmedia.co.za/",
+      description:
+        "Three J Media builds websites, manages domains, and provides hosting and launch support for South African businesses ready to grow online.",
+      publisher: {
+        "@type": "Organization",
+        name: "Three J Media",
+        url: "https://threejmedia.co.za/",
+      },
+    },
   });
 
   const handleSelectPlan = (planId: PlanId) => {

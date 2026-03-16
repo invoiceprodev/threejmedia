@@ -21,6 +21,14 @@ export default function BlogPage() {
     description:
       "Read practical articles from Three J Media on websites, branding, domains, and digital growth for startups, creators, and small businesses.",
     path: "/blog",
+    structuredData: {
+      "@context": "https://schema.org",
+      "@type": "Blog",
+      name: "Three J Media Blog",
+      url: "https://threejmedia.co.za/blog",
+      description:
+        "Read practical articles from Three J Media on websites, branding, domains, and digital growth for startups, creators, and small businesses.",
+    },
   });
 
   return (

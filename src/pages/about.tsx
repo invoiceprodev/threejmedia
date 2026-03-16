@@ -29,6 +29,19 @@ export default function AboutPage() {
     description:
       "Learn how Three J Media helps startups, creators, influencers, bloggers, and small businesses build credible digital brands online.",
     path: "/about",
+    structuredData: {
+      "@context": "https://schema.org",
+      "@type": "AboutPage",
+      name: "About Three J Media",
+      url: "https://threejmedia.co.za/about",
+      description:
+        "Learn how Three J Media helps startups, creators, influencers, bloggers, and small businesses build credible digital brands online.",
+      mainEntity: {
+        "@type": "Organization",
+        name: "Three J Media",
+        url: "https://threejmedia.co.za/",
+      },
+    },
   });
 
   return (

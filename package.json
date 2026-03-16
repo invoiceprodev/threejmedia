@@ -80,7 +80,7 @@
     "dev": "vite",
     "dev:all": "node scripts/dev-all.mjs",
     "dev:api:once": "node server/index.js",
-    "build": "tsc && vite build",
+    "build": "node scripts/generate-sitemap.mjs && tsc && vite build",
     "dev:api": "node --watch server/index.js",
     "start": "node server/index.js",
     "start:web": "vite preview",

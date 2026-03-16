@@ -10,6 +10,7 @@ type SeoConfig = {
 };
 
 const SITE_ORIGIN = "https://threejmedia.co.za";
+const SITE_NAME = "Three J Media";
 const DEFAULT_OG_IMAGE = `${SITE_ORIGIN}/og-image.png`;
 
 function upsertMeta(selector: string, attributes: Record<string, string>) {
@@ -35,7 +36,6 @@ export function usePageSeo({
 }: SeoConfig) {
   useEffect(() => {
     const canonicalHref = new URL(path, SITE_ORIGIN).toString();
-    const previousTitle = document.title;
     const canonical =
       document.head.querySelector('link[rel="canonical"]') ||
       Object.assign(document.createElement("link"), { rel: "canonical" });
@@ -48,13 +48,18 @@ export function usePageSeo({
     document.title = title;
     upsertMeta('meta[name="description"]', { name: "description", content: description });
     upsertMeta('meta[name="robots"]', { name: "robots", content: robots });
+    upsertMeta('meta[property="og:site_name"]', { property: "og:site_name", content: SITE_NAME });
+    upsertMeta('meta[property="og:locale"]', { property: "og:locale", content: "en_ZA" });
     upsertMeta('meta[property="og:title"]', { property: "og:title", content: title });
     upsertMeta('meta[property="og:description"]', { property: "og:description", content: description });
     upsertMeta('meta[property="og:type"]', { property: "og:type", content: ogType });
     upsertMeta('meta[property="og:url"]', { property: "og:url", content: canonicalHref });
     upsertMeta('meta[property="og:image"]', { property: "og:image", content: DEFAULT_OG_IMAGE });
+    upsertMeta('meta[name="twitter:card"]', { name: "twitter:card", content: "summary_large_image" });
+    upsertMeta('meta[name="twitter:site"]', { name: "twitter:site", content: "@threejmedia" });
     upsertMeta('meta[name="twitter:title"]', { name: "twitter:title", content: title });
     upsertMeta('meta[name="twitter:description"]', { name: "twitter:description", content: description });
+    upsertMeta('meta[name="twitter:url"]', { name: "twitter:url", content: canonicalHref });
     upsertMeta('meta[name="twitter:image"]', { name: "twitter:image", content: DEFAULT_OG_IMAGE });
 
     let jsonLdElement: HTMLScriptElement | null = null;
@@ -72,8 +77,6 @@ export function usePageSeo({
     }
 
     return () => {
-      document.title = previousTitle;
-
       if (jsonLdElement?.parentNode) {
         jsonLdElement.parentNode.removeChild(jsonLdElement);
       }

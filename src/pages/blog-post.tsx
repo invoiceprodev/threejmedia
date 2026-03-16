@@ -21,6 +21,7 @@ export default function BlogPostPage({ slug }: { slug: string }) {
     title: post ? `${post.title} | Three J Media` : "Blog | Three J Media",
     description: post?.excerpt || "Read practical blog content from Three J Media.",
     path: `/blog/${slug}`,
+    robots: post ? "index, follow" : "noindex, nofollow",
     ogType: post ? "article" : "website",
     structuredData: post
       ? {
