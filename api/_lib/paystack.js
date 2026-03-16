@@ -1,3 +1,5 @@
+import { createHmac, timingSafeEqual } from "node:crypto";
+
 function json(response, status, payload, extraHeaders = {}) {
   response.writeHead(status, {
     "Content-Type": "application/json",
@@ -97,6 +99,106 @@ async function updateSignupRecord({ supabaseUrl, serviceRoleKey, table, paymentR
   return Array.isArray(payload) ? payload[0] : payload;
 }
 
+async function verifyPaystackTransaction({ paystackSecretKey, reference }) {
+  const verifyResponse = await fetch(`https://api.paystack.co/transaction/verify/${encodeURIComponent(reference)}`, {
+    headers: {
+      Authorization: `Bearer ${paystackSecretKey}`,
+    },
+  });
+
+  const verifyPayload = await verifyResponse.json().catch(() => null);
+
+  if (!verifyResponse.ok || !verifyPayload?.status || !verifyPayload?.data) {
+    throw new Error(verifyPayload?.message || "Unable to verify Paystack transaction.");
+  }
+
+  return verifyPayload.data;
+}
+
+async function syncVerifiedTransaction({
+  paystackSecretKey,
+  supabaseUrl,
+  serviceRoleKey,
+  table,
+  reference,
+}) {
+  const transaction = await verifyPaystackTransaction({ paystackSecretKey, reference });
+  const paymentStatus = String(transaction.status || "unknown");
+  const metadata = transaction.metadata || {};
+  const paidAt = transaction.paid_at || transaction.paidAt || new Date().toISOString();
+  const registrationYears = Number(metadata.domain_registration_years || 1);
+  const domainRegistrationStartsAt = paymentStatus === "success" ? new Date(paidAt).toISOString() : null;
+  const domainAutoRenewAt =
+    paymentStatus === "success" ? addYearsIsoDate(domainRegistrationStartsAt, registrationYears) : null;
+  const fulfillmentUpdate = getFulfillmentUpdate(paymentStatus);
+  const storedDomain = normalizeStoredDomainSelection(metadata);
+  const signup = await updateSignupRecord({
+    supabaseUrl,
+    serviceRoleKey,
+    table,
+    paymentReference: reference,
+    update: {
+      payment_status: paymentStatus,
+      auth0_user_id: metadata.auth0_user_id || null,
+      domain_registration_starts_at: domainRegistrationStartsAt,
+      domain_auto_renew_at: domainAutoRenewAt,
+      ...(storedDomain.selected_domain_full
+        ? {
+            selected_domain_name: storedDomain.selected_domain_name,
+            selected_domain_extension: storedDomain.selected_domain_extension,
+            selected_domain_full: storedDomain.selected_domain_full,
+            domain_registration_years: storedDomain.domain_registration_years,
+          }
+        : {}),
+      ...fulfillmentUpdate,
+    },
+  });
+
+  return {
+    signup,
+    transaction,
+    paymentStatus,
+    domainAutoRenewAt,
+    fulfillmentUpdate,
+  };
+}
+
+async function readRawBody(request) {
+  if (typeof request.body === "string") {
+    return request.body;
+  }
+
+  if (Buffer.isBuffer(request.body)) {
+    return request.body.toString("utf8");
+  }
+
+  if (request.body && typeof request.body === "object") {
+    return JSON.stringify(request.body);
+  }
+
+  const chunks = [];
+
+  for await (const chunk of request) {
+    chunks.push(typeof chunk === "string" ? Buffer.from(chunk) : chunk);
+  }
+
+  return Buffer.concat(chunks).toString("utf8");
+}
+
+function isValidPaystackSignature({ rawBody, signature, secretKey }) {
+  const normalizedSignature = Array.isArray(signature) ? signature[0] : signature;
+
+  if (!normalizedSignature || !secretKey) {
+    return false;
+  }
+
+  const expected = createHmac("sha512", secretKey).update(rawBody).digest("hex");
+  const expectedBuffer = Buffer.from(expected, "utf8");
+  const signatureBuffer = Buffer.from(normalizedSignature, "utf8");
+
+  return expectedBuffer.length === signatureBuffer.length && timingSafeEqual(expectedBuffer, signatureBuffer);
+}
+
 export async function handlePaystackVerifyRequest(request, response, options) {
   const {
     allowedOrigin = "",
@@ -128,49 +230,12 @@ export async function handlePaystackVerifyRequest(request, response, options) {
   }
 
   try {
-    const verifyResponse = await fetch(`https://api.paystack.co/transaction/verify/${encodeURIComponent(reference)}`, {
-      headers: {
-        Authorization: `Bearer ${paystackSecretKey}`,
-      },
-    });
-
-    const verifyPayload = await verifyResponse.json().catch(() => null);
-
-    if (!verifyResponse.ok || !verifyPayload?.status || !verifyPayload?.data) {
-      throw new Error(verifyPayload?.message || "Unable to verify Paystack transaction.");
-    }
-
-    const transaction = verifyPayload.data;
-    const paymentStatus = String(transaction.status || "unknown");
-    const metadata = transaction.metadata || {};
-    const paidAt = transaction.paid_at || transaction.paidAt || new Date().toISOString();
-    const registrationYears = Number(metadata.domain_registration_years || 1);
-    const domainRegistrationStartsAt = paymentStatus === "success" ? new Date(paidAt).toISOString() : null;
-    const domainAutoRenewAt =
-      paymentStatus === "success" ? addYearsIsoDate(domainRegistrationStartsAt, registrationYears) : null;
-    const fulfillmentUpdate = getFulfillmentUpdate(paymentStatus);
-    const storedDomain = normalizeStoredDomainSelection(metadata);
-
-    const signup = await updateSignupRecord({
+    const { signup, transaction, paymentStatus, domainAutoRenewAt, fulfillmentUpdate } = await syncVerifiedTransaction({
+      paystackSecretKey,
       supabaseUrl,
       serviceRoleKey,
       table: signupTable,
-      paymentReference: reference,
-      update: {
-        payment_status: paymentStatus,
-        auth0_user_id: metadata.auth0_user_id || null,
-        domain_registration_starts_at: domainRegistrationStartsAt,
-        domain_auto_renew_at: domainAutoRenewAt,
-        ...(storedDomain.selected_domain_full
-          ? {
-              selected_domain_name: storedDomain.selected_domain_name,
-              selected_domain_extension: storedDomain.selected_domain_extension,
-              selected_domain_full: storedDomain.selected_domain_full,
-              domain_registration_years: storedDomain.domain_registration_years,
-            }
-          : {}),
-        ...fulfillmentUpdate,
-      },
+      reference,
     });
 
     return json(
@@ -182,8 +247,8 @@ export async function handlePaystackVerifyRequest(request, response, options) {
         email: signup?.email || transaction.customer?.email || null,
         fullName: signup?.client_full_name || null,
         companyName: signup?.company_name || null,
-        planName: signup?.plan_name || metadata?.plan_id || null,
-        selectedDomain: signup?.selected_domain_full || metadata?.selected_domain_full || null,
+        planName: signup?.plan_name || transaction.metadata?.plan_id || null,
+        selectedDomain: signup?.selected_domain_full || transaction.metadata?.selected_domain_full || null,
         domainAutoRenewAt: signup?.domain_auto_renew_at || domainAutoRenewAt,
         domainFulfillmentStatus: signup?.domain_fulfillment_status || fulfillmentUpdate.domain_fulfillment_status,
         domainFulfillmentNotes: signup?.domain_fulfillment_notes || fulfillmentUpdate.domain_fulfillment_notes,
@@ -196,6 +261,60 @@ export async function handlePaystackVerifyRequest(request, response, options) {
       502,
       { message: error instanceof Error ? error.message : "Unable to verify Paystack transaction." },
       corsHeaders,
+    );
+  }
+}
+
+export async function handlePaystackWebhookRequest(request, response, options) {
+  const {
+    paystackSecretKey,
+    supabaseUrl,
+    serviceRoleKey,
+    signupTable = "client_signups",
+  } = options;
+
+  if (request.method !== "POST") {
+    return json(response, 405, { message: "Method not allowed." }, { Allow: "POST" });
+  }
+
+  if (!paystackSecretKey || !supabaseUrl || !serviceRoleKey) {
+    return json(response, 503, { message: "Paystack webhook is not configured yet." });
+  }
+
+  try {
+    const rawBody = await readRawBody(request);
+    const signature = request.headers["x-paystack-signature"];
+
+    if (!isValidPaystackSignature({ rawBody, signature, secretKey: paystackSecretKey })) {
+      return json(response, 401, { message: "Invalid Paystack signature." });
+    }
+
+    const payload = rawBody ? JSON.parse(rawBody) : null;
+    const event = String(payload?.event || "");
+    const reference = payload?.data?.reference ? String(payload.data.reference).trim() : "";
+
+    if (!reference) {
+      return json(response, 400, { message: "Missing Paystack reference." });
+    }
+
+    if (event !== "charge.success") {
+      return json(response, 200, { received: true, skipped: true, event });
+    }
+
+    const { paymentStatus } = await syncVerifiedTransaction({
+      paystackSecretKey,
+      supabaseUrl,
+      serviceRoleKey,
+      table: signupTable,
+      reference,
+    });
+
+    return json(response, 200, { received: true, event, paymentStatus, reference });
+  } catch (error) {
+    return json(
+      response,
+      502,
+      { message: error instanceof Error ? error.message : "Unable to process Paystack webhook." },
     );
   }
 }

@@ -1,4 +1,4 @@
-import { Check } from "lucide-react";
+import { Check, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useScrollAnimation } from "@/hooks/use-scroll-animation";
 import { plans, type PlanId } from "@/lib/plans";
@@ -36,6 +36,10 @@ export function PricingSection({ onSelectPlan }: PricingSectionProps) {
             No hidden fees. No surprises. Just honest pricing for quality South
             African websites.
           </p>
+          <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-[#83c406]/25 bg-[#83c406]/10 px-4 py-2 text-sm font-medium text-gray-700">
+            <ShieldCheck className="h-4 w-4 text-[#6da400]" />
+            Secure payment is handled at checkout with Paystack.
+          </div>
         </div>
 
         {/* Pricing cards */}

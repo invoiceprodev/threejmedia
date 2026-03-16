@@ -1,6 +1,6 @@
 import { handleHealthRequest, handleNewsletterRequest } from "./_lib/newsletter.js";
 import { handleSignupContinueRequest, handleSignupRequest } from "./_lib/signup.js";
-import { handlePaystackVerifyRequest } from "./_lib/paystack.js";
+import { handlePaystackVerifyRequest, handlePaystackWebhookRequest } from "./_lib/paystack.js";
 import { handleMeRequest } from "./_lib/me.js";
 import { handleBudgetQuoteRequest } from "./_lib/budget-quote.js";
 import {
@@ -85,6 +85,15 @@ export default async function handler(request, response) {
   if (pathname === "/api/paystack/verify") {
     return handlePaystackVerifyRequest(request, response, {
       allowedOrigin: process.env.ALLOWED_ORIGIN,
+      paystackSecretKey: process.env.PAYSTACK_SECRET_KEY,
+      supabaseUrl: process.env.SUPABASE_URL,
+      serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
+      signupTable: process.env.SUPABASE_SIGNUPS_TABLE,
+    });
+  }
+
+  if (pathname === "/api/paystack/webhook") {
+    return handlePaystackWebhookRequest(request, response, {
       paystackSecretKey: process.env.PAYSTACK_SECRET_KEY,
       supabaseUrl: process.env.SUPABASE_URL,
       serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY,

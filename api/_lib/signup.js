@@ -280,7 +280,7 @@ async function fetchLatestPendingSignup({ supabaseUrl, serviceRoleKey, table, em
   }
 
   const response = await fetch(
-    `${supabaseUrl}/rest/v1/${table}?select=signup_reference,company_name,client_full_name,email,plan_id,plan_name,amount_zar,selected_domain_name,selected_domain_extension,selected_domain_full,domain_registration_years,domain_registration_starts_at,domain_auto_renew_at,domain_fulfillment_status,domain_fulfillment_notes,domain_fulfillment_requested_at,domain_fulfillment_completed_at,auth0_user_id,payment_status,created_at&payment_status=eq.pending_verification&or=(${filters.join(",")})&order=created_at.desc&limit=1`,
+    `${supabaseUrl}/rest/v1/${table}?select=signup_reference,company_name,client_full_name,email,plan_id,plan_name,amount_zar,selected_domain_name,selected_domain_extension,selected_domain_full,domain_registration_years,domain_registration_starts_at,domain_auto_renew_at,domain_fulfillment_status,domain_fulfillment_notes,domain_fulfillment_requested_at,domain_fulfillment_completed_at,auth0_user_id,payment_reference,payment_status,created_at&payment_status=in.(pending_verification,initialized)&or=(${filters.join(",")})&order=created_at.desc&limit=1`,
     {
       headers: {
         apikey: serviceRoleKey,

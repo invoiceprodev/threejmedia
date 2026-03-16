@@ -71,6 +71,10 @@ Database: Supabase Postgres
    - `DOMAIN_FULFILLMENT_ADMIN_TOKEN`
    - `PORT`
 4. Set `ALLOWED_ORIGIN` to your deployed frontend URL, for example `https://threejmedia.co.za`.
+5. In the Paystack dashboard, set:
+   - Callback URL: `https://threejmedia.co.za/payment/success`
+   - Webhook URL: `https://api.threejmedia.co.za/api/paystack/webhook`
+6. Paystack signs webhook requests with your live secret key, so `PAYSTACK_SECRET_KEY` must match the live dashboard account.
 
 ## Auth0 settings
 
@@ -104,11 +108,12 @@ Use a SPA application for the frontend login flow and a regular Auth0 API identi
 - `POST /api/signup`
 - `POST /api/signup/continue`
 - `GET /api/paystack/verify`
+- `POST /api/paystack/webhook`
 - `GET /api/me`
 - `POST /api/domain-fulfillment/onboarding`
 - `POST /api/domain-fulfillment/submit`
 
-The newsletter form now posts to `VITE_API_BASE_URL/api/newsletter` and stores subscribers in Supabase. The budget CTA posts to `VITE_API_BASE_URL/api/budget-quote` and stores custom quote requests in Supabase. Pricing signups now post to `VITE_API_BASE_URL/api/signup`, create an Auth0 user, and store the signup in a pending verification state. After the client confirms their email address, the app calls `POST /api/signup/continue` to initialize Paystack checkout. After Paystack returns, `/payment/success` verifies the transaction and the protected `/dashboard` uses Auth0 access tokens against `GET /api/me`.
+The newsletter form now posts to `VITE_API_BASE_URL/api/newsletter` and stores subscribers in Supabase. The budget CTA posts to `VITE_API_BASE_URL/api/budget-quote` and stores custom quote requests in Supabase. Pricing signups now post to `VITE_API_BASE_URL/api/signup`, create an Auth0 user, and store the signup in a pending verification state. After the client confirms their email address, the app calls `POST /api/signup/continue` to initialize Paystack checkout. After Paystack returns, `/payment/success` verifies the transaction, and Paystack webhooks also sync the payment server-to-server so successful payments are not dependent on the browser returning. The protected `/dashboard` uses Auth0 access tokens against `GET /api/me`.
 
 For managed domain fulfillment:
 - the customer submits registrant and nameserver details through `POST /api/domain-fulfillment/onboarding`
