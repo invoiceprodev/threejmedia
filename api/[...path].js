@@ -2,7 +2,11 @@ import { handleHealthRequest, handleNewsletterRequest } from "./_lib/newsletter.
 import { handleSignupContinueRequest, handleSignupRequest } from "./_lib/signup.js";
 import { handlePaystackVerifyRequest, handlePaystackWebhookRequest } from "./_lib/paystack.js";
 import { handleMeRequest } from "./_lib/me.js";
-import { handleAdminOverviewRequest } from "./_lib/admin.js";
+import {
+  handleAdminClientsRequest,
+  handleAdminOverviewRequest,
+  handleAdminSubscriptionsRequest,
+} from "./_lib/admin.js";
 import { handleBudgetQuoteRequest } from "./_lib/budget-quote.js";
 import {
   handleDomainFulfillmentOnboardingRequest,
@@ -126,6 +130,32 @@ export default async function handler(request, response) {
       adminAllowedEmails: process.env.ADMIN_ALLOWED_EMAILS,
       paystackSecretKey: process.env.PAYSTACK_SECRET_KEY,
       paystackCallbackUrl: process.env.PAYSTACK_CALLBACK_URL,
+    });
+  }
+
+  if (pathname === "/api/admin/clients") {
+    return handleAdminClientsRequest(request, response, {
+      allowedOrigin: process.env.ALLOWED_ORIGIN,
+      auth0Domain: process.env.AUTH0_DOMAIN,
+      auth0Audience: process.env.AUTH0_AUDIENCE,
+      auth0ClientId: process.env.AUTH0_CLIENT_ID,
+      supabaseUrl: process.env.SUPABASE_URL,
+      serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
+      adminAllowedEmails: process.env.ADMIN_ALLOWED_EMAILS,
+      adminClientsTable: process.env.SUPABASE_ADMIN_CLIENTS_TABLE,
+    });
+  }
+
+  if (pathname === "/api/admin/subscriptions") {
+    return handleAdminSubscriptionsRequest(request, response, {
+      allowedOrigin: process.env.ALLOWED_ORIGIN,
+      auth0Domain: process.env.AUTH0_DOMAIN,
+      auth0Audience: process.env.AUTH0_AUDIENCE,
+      auth0ClientId: process.env.AUTH0_CLIENT_ID,
+      supabaseUrl: process.env.SUPABASE_URL,
+      serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
+      adminAllowedEmails: process.env.ADMIN_ALLOWED_EMAILS,
+      adminSubscriptionsTable: process.env.SUPABASE_ADMIN_SUBSCRIPTIONS_TABLE,
     });
   }
 

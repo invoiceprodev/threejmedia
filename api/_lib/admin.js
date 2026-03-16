@@ -45,6 +45,47 @@ function getClientKey(signup) {
   return auth0UserId || email;
 }
 
+async function parseJsonBody(request) {
+  if (typeof request.body === "string") {
+    return JSON.parse(request.body);
+  }
+
+  if (request.body && typeof request.body === "object") {
+    return request.body;
+  }
+
+  const chunks = [];
+
+  for await (const chunk of request) {
+    chunks.push(typeof chunk === "string" ? Buffer.from(chunk) : chunk);
+  }
+
+  return chunks.length > 0 ? JSON.parse(Buffer.concat(chunks).toString("utf8")) : {};
+}
+
+function normalizeText(value) {
+  return String(value || "").trim();
+}
+
+function normalizeOptionalText(value) {
+  const normalized = normalizeText(value);
+  return normalized || null;
+}
+
+function normalizeEmail(value) {
+  return normalizeText(value).toLowerCase();
+}
+
+function normalizeStringArray(value) {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .map((item) => normalizeText(item))
+    .filter(Boolean);
+}
+
 function formatCurrencyZar(amount) {
   return new Intl.NumberFormat("en-ZA", {
     style: "currency",
@@ -106,6 +147,95 @@ async function fetchSignups({ supabaseUrl, serviceRoleKey, table }) {
   }
 
   return Array.isArray(payload) ? payload : [];
+}
+
+async function requireAdminIdentity(request, options) {
+  const { auth0Domain, auth0Audience, auth0ClientId, adminAllowedEmails = "" } = options;
+  const adminEmails = getAdminEmails(adminAllowedEmails);
+
+  if (adminEmails.length === 0) {
+    const error = new Error("Admin access is not configured yet.");
+    error.statusCode = 503;
+    throw error;
+  }
+
+  const user = await requireAuth0User(request, {
+    auth0Domain,
+    auth0Audience,
+  });
+  const identity = await requireAuth0IdToken(request, {
+    auth0Domain,
+    auth0ClientId,
+  });
+
+  const auth0UserId = typeof user.sub === "string" ? user.sub : "";
+  const identityUserId = typeof identity.sub === "string" ? identity.sub : "";
+  const email = typeof identity.email === "string" ? identity.email.trim().toLowerCase() : "";
+  const fullName =
+    typeof identity.name === "string" ? identity.name : typeof user.name === "string" ? user.name : "";
+
+  if (!auth0UserId || !identityUserId || identityUserId !== auth0UserId) {
+    const error = new Error("Your admin session could not be verified.");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  if (!adminEmails.includes(email)) {
+    const error = new Error("Your account does not have admin access.");
+    error.statusCode = 403;
+    throw error;
+  }
+
+  return {
+    admin: {
+      email,
+      fullName,
+      auth0UserId,
+    },
+    adminEmails,
+  };
+}
+
+async function listTableRows({ supabaseUrl, serviceRoleKey, table, select, orderBy = "created_at.desc", limit = 50 }) {
+  const response = await fetch(
+    `${supabaseUrl}/rest/v1/${table}?select=${encodeURIComponent(select)}&order=${encodeURIComponent(orderBy)}&limit=${limit}`,
+    {
+      headers: {
+        apikey: serviceRoleKey,
+        Authorization: `Bearer ${serviceRoleKey}`,
+      },
+    },
+  );
+
+  const payload = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    throw new Error(`Unable to load ${table}.`);
+  }
+
+  return Array.isArray(payload) ? payload : [];
+}
+
+async function insertTableRow({ supabaseUrl, serviceRoleKey, table, record }) {
+  const response = await fetch(`${supabaseUrl}/rest/v1/${table}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      apikey: serviceRoleKey,
+      Authorization: `Bearer ${serviceRoleKey}`,
+      Prefer: "return=representation",
+    },
+    body: JSON.stringify(record),
+  });
+
+  const payload = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    const errorText = typeof payload === "string" ? payload : JSON.stringify(payload);
+    throw new Error(errorText || `Unable to create ${table} record.`);
+  }
+
+  return Array.isArray(payload) ? payload[0] ?? null : payload;
 }
 
 function buildAdminSnapshot(signups, options) {
@@ -238,35 +368,13 @@ export async function handleAdminOverviewRequest(request, response, options) {
     return json(response, 503, { message: "Admin data is not configured yet." }, corsHeaders);
   }
 
-  const adminEmails = getAdminEmails(adminAllowedEmails);
-
-  if (adminEmails.length === 0) {
-    return json(response, 503, { message: "Admin access is not configured yet." }, corsHeaders);
-  }
-
   try {
-    const user = await requireAuth0User(request, {
+    const { admin, adminEmails } = await requireAdminIdentity(request, {
       auth0Domain,
       auth0Audience,
-    });
-    const identity = await requireAuth0IdToken(request, {
-      auth0Domain,
       auth0ClientId,
+      adminAllowedEmails,
     });
-
-    const auth0UserId = typeof user.sub === "string" ? user.sub : "";
-    const identityUserId = typeof identity.sub === "string" ? identity.sub : "";
-    const email = typeof identity.email === "string" ? identity.email.trim().toLowerCase() : "";
-    const fullName =
-      typeof identity.name === "string" ? identity.name : typeof user.name === "string" ? user.name : "";
-
-    if (!auth0UserId || !identityUserId || identityUserId !== auth0UserId) {
-      return json(response, 400, { message: "Your admin session could not be verified." }, corsHeaders);
-    }
-
-    if (!adminEmails.includes(email)) {
-      return json(response, 403, { message: "Your account does not have admin access." }, corsHeaders);
-    }
 
     const signups = await fetchSignups({
       supabaseUrl,
@@ -286,10 +394,7 @@ export async function handleAdminOverviewRequest(request, response, options) {
       response,
       200,
       {
-        admin: {
-          email,
-          fullName,
-        },
+        admin,
         ...snapshot,
       },
       corsHeaders,
@@ -303,5 +408,181 @@ export async function handleAdminOverviewRequest(request, response, options) {
       },
       corsHeaders,
     );
+  }
+}
+
+export async function handleAdminClientsRequest(request, response, options) {
+  const {
+    auth0Domain,
+    auth0Audience,
+    auth0ClientId,
+    supabaseUrl,
+    serviceRoleKey,
+    allowedOrigin = "",
+    adminAllowedEmails = "",
+    adminClientsTable = "admin_clients",
+  } = options;
+
+  const origin = request.headers?.origin;
+  const corsHeaders = getCorsHeaders(origin, allowedOrigin);
+
+  if (request.method === "OPTIONS") {
+    return json(response, 204, {}, {
+      ...corsHeaders,
+      "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Auth0-Id-Token",
+      "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+    });
+  }
+
+  if (!supabaseUrl || !serviceRoleKey) {
+    return json(response, 503, { message: "Admin data is not configured yet." }, corsHeaders);
+  }
+
+  try {
+    const { admin } = await requireAdminIdentity(request, {
+      auth0Domain,
+      auth0Audience,
+      auth0ClientId,
+      adminAllowedEmails,
+    });
+
+    if (request.method === "GET") {
+      const clients = await listTableRows({
+        supabaseUrl,
+        serviceRoleKey,
+        table: adminClientsTable,
+        select: "id,auth0_user_id,signup_reference,company_name,primary_contact_name,primary_email,primary_phone,status,source,tags,notes,metadata,created_at,updated_at",
+      });
+
+      return json(response, 200, { admin, data: clients }, corsHeaders);
+    }
+
+    if (request.method === "POST") {
+      const body = await parseJsonBody(request);
+      const companyName = normalizeText(body?.companyName);
+      const primaryEmail = normalizeEmail(body?.primaryEmail);
+
+      if (!companyName || !primaryEmail) {
+        return json(response, 400, { message: "Company name and primary email are required." }, corsHeaders);
+      }
+
+      const client = await insertTableRow({
+        supabaseUrl,
+        serviceRoleKey,
+        table: adminClientsTable,
+        record: {
+          auth0_user_id: normalizeOptionalText(body?.auth0UserId),
+          signup_reference: normalizeOptionalText(body?.signupReference),
+          company_name: companyName,
+          primary_contact_name: normalizeOptionalText(body?.primaryContactName),
+          primary_email: primaryEmail,
+          primary_phone: normalizeOptionalText(body?.primaryPhone),
+          status: normalizeText(body?.status) || "lead",
+          source: normalizeText(body?.source) || "admin_manual",
+          tags: normalizeStringArray(body?.tags),
+          notes: normalizeOptionalText(body?.notes),
+          metadata: typeof body?.metadata === "object" && body.metadata ? body.metadata : {},
+        },
+      });
+
+      return json(response, 201, { admin, data: client }, corsHeaders);
+    }
+
+    return json(response, 405, { message: "Method not allowed." }, { ...corsHeaders, Allow: "GET, POST, OPTIONS" });
+  } catch (error) {
+    const statusCode = typeof error?.statusCode === "number" ? error.statusCode : 401;
+    return json(response, statusCode, { message: error instanceof Error ? error.message : "Unauthorized." }, corsHeaders);
+  }
+}
+
+export async function handleAdminSubscriptionsRequest(request, response, options) {
+  const {
+    auth0Domain,
+    auth0Audience,
+    auth0ClientId,
+    supabaseUrl,
+    serviceRoleKey,
+    allowedOrigin = "",
+    adminAllowedEmails = "",
+    adminSubscriptionsTable = "admin_subscriptions",
+  } = options;
+
+  const origin = request.headers?.origin;
+  const corsHeaders = getCorsHeaders(origin, allowedOrigin);
+
+  if (request.method === "OPTIONS") {
+    return json(response, 204, {}, {
+      ...corsHeaders,
+      "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Auth0-Id-Token",
+      "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+    });
+  }
+
+  if (!supabaseUrl || !serviceRoleKey) {
+    return json(response, 503, { message: "Admin data is not configured yet." }, corsHeaders);
+  }
+
+  try {
+    const { admin } = await requireAdminIdentity(request, {
+      auth0Domain,
+      auth0Audience,
+      auth0ClientId,
+      adminAllowedEmails,
+    });
+
+    if (request.method === "GET") {
+      const subscriptions = await listTableRows({
+        supabaseUrl,
+        serviceRoleKey,
+        table: adminSubscriptionsTable,
+        select:
+          "id,client_id,signup_reference,plan_id,plan_name,status,billing_cycle,amount_zar,currency,payment_provider,payment_reference,starts_at,renews_at,paid_at,cancelled_at,metadata,created_at,updated_at",
+      });
+
+      return json(response, 200, { admin, data: subscriptions }, corsHeaders);
+    }
+
+    if (request.method === "POST") {
+      const body = await parseJsonBody(request);
+      const clientId = normalizeText(body?.clientId);
+      const planId = normalizeText(body?.planId);
+      const planName = normalizeText(body?.planName);
+
+      if (!clientId || !planId || !planName) {
+        return json(response, 400, { message: "Client, plan ID, and plan name are required." }, corsHeaders);
+      }
+
+      const amountZar = Number(body?.amountZar || 0);
+
+      const subscription = await insertTableRow({
+        supabaseUrl,
+        serviceRoleKey,
+        table: adminSubscriptionsTable,
+        record: {
+          client_id: clientId,
+          signup_reference: normalizeOptionalText(body?.signupReference),
+          plan_id: planId,
+          plan_name: planName,
+          status: normalizeText(body?.status) || "draft",
+          billing_cycle: normalizeText(body?.billingCycle) || "once_off",
+          amount_zar: Number.isFinite(amountZar) ? amountZar : 0,
+          currency: normalizeText(body?.currency) || "ZAR",
+          payment_provider: normalizeText(body?.paymentProvider) || "paystack",
+          payment_reference: normalizeOptionalText(body?.paymentReference),
+          starts_at: normalizeOptionalText(body?.startsAt),
+          renews_at: normalizeOptionalText(body?.renewsAt),
+          paid_at: normalizeOptionalText(body?.paidAt),
+          cancelled_at: normalizeOptionalText(body?.cancelledAt),
+          metadata: typeof body?.metadata === "object" && body.metadata ? body.metadata : {},
+        },
+      });
+
+      return json(response, 201, { admin, data: subscription }, corsHeaders);
+    }
+
+    return json(response, 405, { message: "Method not allowed." }, { ...corsHeaders, Allow: "GET, POST, OPTIONS" });
+  } catch (error) {
+    const statusCode = typeof error?.statusCode === "number" ? error.statusCode : 401;
+    return json(response, statusCode, { message: error instanceof Error ? error.message : "Unauthorized." }, corsHeaders);
   }
 }

@@ -15,7 +15,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Textarea } from "@/components/ui/textarea";
 import { hasAuth0BrowserEnv } from "@/lib/env";
 import { apiFetch } from "@/lib/api-client";
 import { navigate } from "@/lib/navigation";
@@ -72,6 +76,56 @@ type AdminOverviewPayload = {
   }>;
 };
 
+type AdminClientRecord = {
+  id: string;
+  company_name: string;
+  primary_contact_name: string | null;
+  primary_email: string;
+  primary_phone: string | null;
+  status: string;
+  source: string;
+  updated_at: string;
+};
+
+type AdminSubscriptionRecord = {
+  id: string;
+  client_id: string;
+  plan_name: string;
+  amount_zar: number;
+  status: string;
+  billing_cycle: string;
+  payment_provider: string;
+  payment_reference: string | null;
+  renews_at: string | null;
+};
+
+type AdminListPayload<T> = {
+  message?: string;
+  data?: T[];
+};
+
+type AdminCreateClientForm = {
+  companyName: string;
+  primaryContactName: string;
+  primaryEmail: string;
+  primaryPhone: string;
+  status: string;
+  source: string;
+  notes: string;
+};
+
+type AdminCreateSubscriptionForm = {
+  clientId: string;
+  planId: string;
+  planName: string;
+  amountZar: string;
+  status: string;
+  billingCycle: string;
+  paymentProvider: string;
+  paymentReference: string;
+  renewsAt: string;
+};
+
 function formatDate(value?: string | null) {
   if (!value) {
     return "Not set";
@@ -117,9 +171,98 @@ function getAdminReturnTo() {
 export default function AdminPage() {
   const { isAuthenticated, isLoading, loginWithRedirect, logout, getAccessTokenSilently, getIdTokenClaims, user } = useAuth0();
   const [payload, setPayload] = useState<AdminOverviewPayload | null>(null);
+  const [clients, setClients] = useState<AdminClientRecord[]>([]);
+  const [subscriptions, setSubscriptions] = useState<AdminSubscriptionRecord[]>([]);
   const [status, setStatus] = useState<"idle" | "loading" | "error">("idle");
   const [message, setMessage] = useState("");
+  const [clientForm, setClientForm] = useState<AdminCreateClientForm>({
+    companyName: "",
+    primaryContactName: "",
+    primaryEmail: "",
+    primaryPhone: "",
+    status: "active",
+    source: "admin_manual",
+    notes: "",
+  });
+  const [subscriptionForm, setSubscriptionForm] = useState<AdminCreateSubscriptionForm>({
+    clientId: "",
+    planId: "",
+    planName: "",
+    amountZar: "",
+    status: "active",
+    billingCycle: "once_off",
+    paymentProvider: "paystack",
+    paymentReference: "",
+    renewsAt: "",
+  });
+  const [clientFormStatus, setClientFormStatus] = useState<"idle" | "saving" | "error" | "success">("idle");
+  const [subscriptionFormStatus, setSubscriptionFormStatus] = useState<"idle" | "saving" | "error" | "success">("idle");
+  const [clientFormMessage, setClientFormMessage] = useState("");
+  const [subscriptionFormMessage, setSubscriptionFormMessage] = useState("");
   const adminReturnTo = useMemo(() => getAdminReturnTo(), []);
+  const clientLookup = useMemo(
+    () =>
+      new Map(
+        clients.map((client) => [
+          client.id,
+          {
+            companyName: client.company_name,
+            email: client.primary_email,
+          },
+        ]),
+      ),
+    [clients],
+  );
+
+  const fetchAdminData = async (signal?: AbortSignal) => {
+    const accessToken = await getAccessTokenSilently();
+    const idTokenClaims = await getIdTokenClaims();
+    const idToken = typeof idTokenClaims?.__raw === "string" ? idTokenClaims.__raw : "";
+
+    if (!idToken) {
+      throw new Error("We could not verify your sign-in details. Please sign in again.");
+    }
+
+    const headers = {
+      Authorization: `Bearer ${accessToken}`,
+      "X-Auth0-Id-Token": idToken,
+    };
+
+    const [overviewResponse, clientsResponse, subscriptionsResponse] = await Promise.all([
+      apiFetch("/api/admin/overview", {
+        headers,
+        signal,
+      }),
+      apiFetch("/api/admin/clients", {
+        headers,
+        signal,
+      }),
+      apiFetch("/api/admin/subscriptions", {
+        headers,
+        signal,
+      }),
+    ]);
+
+    const overviewBody = (await overviewResponse.json().catch(() => null)) as AdminOverviewPayload | { message?: string } | null;
+    const clientsBody = (await clientsResponse.json().catch(() => null)) as AdminListPayload<AdminClientRecord> | null;
+    const subscriptionsBody = (await subscriptionsResponse.json().catch(() => null)) as AdminListPayload<AdminSubscriptionRecord> | null;
+
+    if (!overviewResponse.ok) {
+      throw new Error(overviewBody?.message || "We could not load your admin workspace.");
+    }
+
+    if (!clientsResponse.ok) {
+      throw new Error(clientsBody?.message || "We could not load admin clients.");
+    }
+
+    if (!subscriptionsResponse.ok) {
+      throw new Error(subscriptionsBody?.message || "We could not load admin subscriptions.");
+    }
+
+    setPayload(overviewBody as AdminOverviewPayload);
+    setClients(Array.isArray(clientsBody?.data) ? clientsBody.data : []);
+    setSubscriptions(Array.isArray(subscriptionsBody?.data) ? subscriptionsBody.data : []);
+  };
 
   usePageSeo({
     title: "Admin Workspace | Three J Media",
@@ -146,29 +289,7 @@ export default function AdminPage() {
       setMessage("Loading your admin workspace...");
 
       try {
-        const accessToken = await getAccessTokenSilently();
-        const idTokenClaims = await getIdTokenClaims();
-        const idToken = typeof idTokenClaims?.__raw === "string" ? idTokenClaims.__raw : "";
-
-        if (!idToken) {
-          throw new Error("We could not verify your sign-in details. Please sign in again.");
-        }
-
-        const response = await apiFetch("/api/admin/overview", {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            "X-Auth0-Id-Token": idToken,
-          },
-          signal: controller.signal,
-        });
-
-        const body = (await response.json().catch(() => null)) as AdminOverviewPayload | { message?: string } | null;
-
-        if (!response.ok) {
-          throw new Error(body?.message || "We could not load your admin workspace.");
-        }
-
-        setPayload(body as AdminOverviewPayload);
+        await fetchAdminData(controller.signal);
         setStatus("idle");
         setMessage("");
       } catch (error) {
@@ -211,6 +332,122 @@ export default function AdminPage() {
       />
     );
   }
+
+  const handleCreateClient = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setClientFormStatus("saving");
+    setClientFormMessage("Saving client...");
+
+    try {
+      const accessToken = await getAccessTokenSilently();
+      const idTokenClaims = await getIdTokenClaims();
+      const idToken = typeof idTokenClaims?.__raw === "string" ? idTokenClaims.__raw : "";
+
+      if (!idToken) {
+        throw new Error("We could not verify your sign-in details. Please sign in again.");
+      }
+
+      const response = await apiFetch("/api/admin/clients", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+          "X-Auth0-Id-Token": idToken,
+        },
+        body: JSON.stringify({
+          companyName: clientForm.companyName,
+          primaryContactName: clientForm.primaryContactName,
+          primaryEmail: clientForm.primaryEmail,
+          primaryPhone: clientForm.primaryPhone,
+          status: clientForm.status,
+          source: clientForm.source,
+          notes: clientForm.notes,
+        }),
+      });
+
+      const body = (await response.json().catch(() => null)) as { message?: string } | null;
+
+      if (!response.ok) {
+        throw new Error(body?.message || "We could not create the client.");
+      }
+
+      await fetchAdminData();
+      setClientForm({
+        companyName: "",
+        primaryContactName: "",
+        primaryEmail: "",
+        primaryPhone: "",
+        status: "active",
+        source: "admin_manual",
+        notes: "",
+      });
+      setClientFormStatus("success");
+      setClientFormMessage("Client created successfully.");
+    } catch (error) {
+      setClientFormStatus("error");
+      setClientFormMessage(error instanceof Error ? error.message : "We could not create the client.");
+    }
+  };
+
+  const handleCreateSubscription = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setSubscriptionFormStatus("saving");
+    setSubscriptionFormMessage("Saving subscription...");
+
+    try {
+      const accessToken = await getAccessTokenSilently();
+      const idTokenClaims = await getIdTokenClaims();
+      const idToken = typeof idTokenClaims?.__raw === "string" ? idTokenClaims.__raw : "";
+
+      if (!idToken) {
+        throw new Error("We could not verify your sign-in details. Please sign in again.");
+      }
+
+      const response = await apiFetch("/api/admin/subscriptions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+          "X-Auth0-Id-Token": idToken,
+        },
+        body: JSON.stringify({
+          clientId: subscriptionForm.clientId,
+          planId: subscriptionForm.planId,
+          planName: subscriptionForm.planName,
+          amountZar: Number(subscriptionForm.amountZar || 0),
+          status: subscriptionForm.status,
+          billingCycle: subscriptionForm.billingCycle,
+          paymentProvider: subscriptionForm.paymentProvider,
+          paymentReference: subscriptionForm.paymentReference,
+          renewsAt: subscriptionForm.renewsAt ? new Date(subscriptionForm.renewsAt).toISOString() : null,
+        }),
+      });
+
+      const body = (await response.json().catch(() => null)) as { message?: string } | null;
+
+      if (!response.ok) {
+        throw new Error(body?.message || "We could not create the subscription.");
+      }
+
+      await fetchAdminData();
+      setSubscriptionForm({
+        clientId: "",
+        planId: "",
+        planName: "",
+        amountZar: "",
+        status: "active",
+        billingCycle: "once_off",
+        paymentProvider: "paystack",
+        paymentReference: "",
+        renewsAt: "",
+      });
+      setSubscriptionFormStatus("success");
+      setSubscriptionFormMessage("Subscription created successfully.");
+    } catch (error) {
+      setSubscriptionFormStatus("error");
+      setSubscriptionFormMessage(error instanceof Error ? error.message : "We could not create the subscription.");
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#f6f4ee] text-slate-900">
@@ -309,35 +546,46 @@ export default function AdminPage() {
             <section className="mt-6 grid gap-6 xl:grid-cols-[1.5fr_1fr]">
               <Card className="border-[#e5dfd1] shadow-none">
                 <CardHeader>
-                  <CardTitle>Recent clients</CardTitle>
-                  <CardDescription>The newest client records coming through the live signup flow.</CardDescription>
+                  <CardTitle>Admin clients</CardTitle>
+                  <CardDescription>Dedicated customer records from the `admin_clients` table.</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <Table>
                     <TableHeader>
                       <TableRow>
                         <TableHead>Client</TableHead>
-                        <TableHead>Plan</TableHead>
+                        <TableHead>Contact</TableHead>
                         <TableHead>Status</TableHead>
-                        <TableHead>Domain</TableHead>
-                        <TableHead>Created</TableHead>
+                        <TableHead>Source</TableHead>
+                        <TableHead>Updated</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {(payload?.recentClients || []).map((client) => (
-                        <TableRow key={client.id}>
-                          <TableCell className="whitespace-normal">
-                            <div className="font-medium text-slate-900">{client.companyName || client.fullName}</div>
-                            <div className="text-xs text-slate-500">{client.email}</div>
+                      {clients.length > 0 ? (
+                        clients.slice(0, 10).map((client) => (
+                          <TableRow key={client.id}>
+                            <TableCell className="whitespace-normal">
+                              <div className="font-medium text-slate-900">{client.company_name}</div>
+                              <div className="text-xs text-slate-500">{client.primary_email}</div>
+                            </TableCell>
+                            <TableCell className="whitespace-normal">
+                              <div>{client.primary_contact_name || "No contact name"}</div>
+                              <div className="text-xs text-slate-500">{client.primary_phone || "No phone number"}</div>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant={getStatusVariant(client.status)}>{client.status}</Badge>
+                            </TableCell>
+                            <TableCell>{client.source}</TableCell>
+                            <TableCell>{formatDate(client.updated_at)}</TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={5} className="py-8 text-center text-sm text-slate-500">
+                            No records yet in `admin_clients`.
                           </TableCell>
-                          <TableCell>{client.planName}</TableCell>
-                          <TableCell>
-                            <Badge variant={getStatusVariant(client.paymentStatus)}>{client.paymentStatus}</Badge>
-                          </TableCell>
-                          <TableCell>{client.selectedDomain || "Not selected"}</TableCell>
-                          <TableCell>{formatDate(client.createdAt)}</TableCell>
                         </TableRow>
-                      ))}
+                      )}
                     </TableBody>
                   </Table>
                 </CardContent>
@@ -393,8 +641,8 @@ export default function AdminPage() {
 
               <Card className="border-[#e5dfd1] shadow-none">
                 <CardHeader>
-                  <CardTitle>Subscriptions and payment status</CardTitle>
-                  <CardDescription>Latest live records you can use to manage client billing conversations.</CardDescription>
+                  <CardTitle>Admin subscriptions</CardTitle>
+                  <CardDescription>Dedicated billing records from the `admin_subscriptions` table.</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <Table>
@@ -409,28 +657,40 @@ export default function AdminPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {(payload?.subscriptions || []).map((subscription) => (
-                        <TableRow key={subscription.id}>
-                          <TableCell className="whitespace-normal">
-                            <div className="font-medium text-slate-900">{subscription.companyName}</div>
-                            <div className="text-xs text-slate-500">{subscription.email}</div>
+                      {subscriptions.length > 0 ? (
+                        subscriptions.slice(0, 12).map((subscription) => {
+                          const client = clientLookup.get(subscription.client_id);
+
+                          return (
+                            <TableRow key={subscription.id}>
+                              <TableCell className="whitespace-normal">
+                                <div className="font-medium text-slate-900">{client?.companyName || "Unknown client"}</div>
+                                <div className="text-xs text-slate-500">{client?.email || subscription.client_id}</div>
+                              </TableCell>
+                              <TableCell>{subscription.plan_name}</TableCell>
+                              <TableCell>{formatCurrency(subscription.amount_zar)}</TableCell>
+                              <TableCell>
+                                <div className="flex flex-col gap-1">
+                                  <Badge variant={getStatusVariant(subscription.status)}>{subscription.status}</Badge>
+                                  <span className="text-xs text-slate-500">
+                                    {subscription.payment_reference || subscription.billing_cycle}
+                                  </span>
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <Badge variant="outline">{subscription.payment_provider}</Badge>
+                              </TableCell>
+                              <TableCell>{formatDate(subscription.renews_at)}</TableCell>
+                            </TableRow>
+                          );
+                        })
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={6} className="py-8 text-center text-sm text-slate-500">
+                            No records yet in `admin_subscriptions`.
                           </TableCell>
-                          <TableCell>{subscription.planName}</TableCell>
-                          <TableCell>{formatCurrency(subscription.amountZar)}</TableCell>
-                          <TableCell>
-                            <div className="flex flex-col gap-1">
-                              <Badge variant={getStatusVariant(subscription.paymentStatus)}>{subscription.paymentStatus}</Badge>
-                              <span className="text-xs text-slate-500">{subscription.paymentReference || "No reference yet"}</span>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant={getStatusVariant(subscription.fulfillmentStatus || "outline")}>
-                              {subscription.fulfillmentStatus || "not_started"}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>{formatDate(subscription.autoRenewAt)}</TableCell>
                         </TableRow>
-                      ))}
+                      )}
                     </TableBody>
                   </Table>
                 </CardContent>
@@ -438,6 +698,203 @@ export default function AdminPage() {
             </section>
 
             <section className="mt-6 grid gap-6 lg:grid-cols-3">
+              <Card className="border-[#e5dfd1] shadow-none lg:col-span-2">
+                <CardHeader>
+                  <CardTitle>Create client</CardTitle>
+                  <CardDescription>Add a dedicated record to `admin_clients`.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <form className="grid gap-4 md:grid-cols-2" onSubmit={handleCreateClient}>
+                    <div className="space-y-2">
+                      <Label htmlFor="client-company-name">Company name</Label>
+                      <Input
+                        id="client-company-name"
+                        value={clientForm.companyName}
+                        onChange={(event) => setClientForm((current) => ({ ...current, companyName: event.target.value }))}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="client-primary-email">Primary email</Label>
+                      <Input
+                        id="client-primary-email"
+                        type="email"
+                        value={clientForm.primaryEmail}
+                        onChange={(event) => setClientForm((current) => ({ ...current, primaryEmail: event.target.value }))}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="client-contact-name">Contact name</Label>
+                      <Input
+                        id="client-contact-name"
+                        value={clientForm.primaryContactName}
+                        onChange={(event) => setClientForm((current) => ({ ...current, primaryContactName: event.target.value }))}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="client-phone">Phone</Label>
+                      <Input
+                        id="client-phone"
+                        value={clientForm.primaryPhone}
+                        onChange={(event) => setClientForm((current) => ({ ...current, primaryPhone: event.target.value }))}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Status</Label>
+                      <Select value={clientForm.status} onValueChange={(value) => setClientForm((current) => ({ ...current, status: value }))}>
+                        <SelectTrigger className="w-full">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="lead">Lead</SelectItem>
+                          <SelectItem value="active">Active</SelectItem>
+                          <SelectItem value="paused">Paused</SelectItem>
+                          <SelectItem value="archived">Archived</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="client-source">Source</Label>
+                      <Input
+                        id="client-source"
+                        value={clientForm.source}
+                        onChange={(event) => setClientForm((current) => ({ ...current, source: event.target.value }))}
+                      />
+                    </div>
+                    <div className="space-y-2 md:col-span-2">
+                      <Label htmlFor="client-notes">Notes</Label>
+                      <Textarea
+                        id="client-notes"
+                        value={clientForm.notes}
+                        onChange={(event) => setClientForm((current) => ({ ...current, notes: event.target.value }))}
+                      />
+                    </div>
+                    <div className="md:col-span-2 flex items-center justify-between gap-3">
+                      <p className={`text-sm ${clientFormStatus === "error" ? "text-red-600" : "text-slate-500"}`}>{clientFormMessage || "Create the client record first, then attach subscriptions below."}</p>
+                      <Button type="submit" disabled={clientFormStatus === "saving"} className="rounded-xl bg-slate-950 text-white hover:bg-slate-800">
+                        {clientFormStatus === "saving" ? "Saving..." : "Create client"}
+                      </Button>
+                    </div>
+                  </form>
+                </CardContent>
+              </Card>
+
+              <Card className="border-[#e5dfd1] shadow-none">
+                <CardHeader>
+                  <CardTitle>Create subscription</CardTitle>
+                  <CardDescription>Add a dedicated record to `admin_subscriptions`.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <form className="space-y-4" onSubmit={handleCreateSubscription}>
+                    <div className="space-y-2">
+                      <Label>Client</Label>
+                      <Select
+                        value={subscriptionForm.clientId}
+                        onValueChange={(value) => setSubscriptionForm((current) => ({ ...current, clientId: value }))}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select client" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {clients.map((client) => (
+                            <SelectItem key={client.id} value={client.id}>
+                              {client.company_name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="subscription-plan-id">Plan ID</Label>
+                      <Input
+                        id="subscription-plan-id"
+                        value={subscriptionForm.planId}
+                        onChange={(event) => setSubscriptionForm((current) => ({ ...current, planId: event.target.value }))}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="subscription-plan-name">Plan name</Label>
+                      <Input
+                        id="subscription-plan-name"
+                        value={subscriptionForm.planName}
+                        onChange={(event) => setSubscriptionForm((current) => ({ ...current, planName: event.target.value }))}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="subscription-amount">Amount ZAR</Label>
+                      <Input
+                        id="subscription-amount"
+                        type="number"
+                        min="0"
+                        value={subscriptionForm.amountZar}
+                        onChange={(event) => setSubscriptionForm((current) => ({ ...current, amountZar: event.target.value }))}
+                      />
+                    </div>
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div className="space-y-2">
+                        <Label>Status</Label>
+                        <Select
+                          value={subscriptionForm.status}
+                          onValueChange={(value) => setSubscriptionForm((current) => ({ ...current, status: value }))}
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="draft">Draft</SelectItem>
+                            <SelectItem value="active">Active</SelectItem>
+                            <SelectItem value="past_due">Past due</SelectItem>
+                            <SelectItem value="cancelled">Cancelled</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Billing cycle</Label>
+                        <Select
+                          value={subscriptionForm.billingCycle}
+                          onValueChange={(value) => setSubscriptionForm((current) => ({ ...current, billingCycle: value }))}
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="once_off">Once off</SelectItem>
+                            <SelectItem value="monthly">Monthly</SelectItem>
+                            <SelectItem value="yearly">Yearly</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="subscription-payment-reference">Payment reference</Label>
+                      <Input
+                        id="subscription-payment-reference"
+                        value={subscriptionForm.paymentReference}
+                        onChange={(event) => setSubscriptionForm((current) => ({ ...current, paymentReference: event.target.value }))}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="subscription-renews-at">Renews at</Label>
+                      <Input
+                        id="subscription-renews-at"
+                        type="date"
+                        value={subscriptionForm.renewsAt}
+                        onChange={(event) => setSubscriptionForm((current) => ({ ...current, renewsAt: event.target.value }))}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between gap-3">
+                      <p className={`text-sm ${subscriptionFormStatus === "error" ? "text-red-600" : "text-slate-500"}`}>{subscriptionFormMessage || "Link the subscription to an existing admin client."}</p>
+                      <Button type="submit" disabled={subscriptionFormStatus === "saving"} className="rounded-xl bg-slate-950 text-white hover:bg-slate-800">
+                        {subscriptionFormStatus === "saving" ? "Saving..." : "Create subscription"}
+                      </Button>
+                    </div>
+                  </form>
+                </CardContent>
+              </Card>
+
               <InfoPanel
                 icon={<Building2 className="h-5 w-5" />}
                 title="Clients"

@@ -28,6 +28,11 @@ A modern, premium, conversion-focused landing page for a South African web desig
   - add dedicated Supabase tables instead of deriving everything from `client_signups`
   - expose protected admin CRUD endpoints from the Railway API
   - evolve `/admin` into the primary operations surface for `admin.threejmedia.co.za`
+- Progress so far:
+  - `admin_clients` SQL schema added
+  - `admin_subscriptions` SQL schema added
+  - protected `GET/POST /api/admin/clients` added
+  - protected `GET/POST /api/admin/subscriptions` added
 
 <phase number="1" title="Core Landing Page – Hero, Services, Pricing & Footer">
 

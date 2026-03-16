@@ -26,6 +26,8 @@ Database: Supabase Postgres
 | `SUPABASE_NEWSLETTER_TABLE` | Railway / server | Supabase table name for newsletter signups |
 | `SUPABASE_SIGNUPS_TABLE` | Railway / server | Supabase table name for plan signup and payment records |
 | `SUPABASE_BUDGET_QUOTES_TABLE` | Railway / server | Supabase table name for budget CTA quote requests |
+| `SUPABASE_ADMIN_CLIENTS_TABLE` | Railway / server | Supabase table name for dedicated admin client records |
+| `SUPABASE_ADMIN_SUBSCRIPTIONS_TABLE` | Railway / server | Supabase table name for dedicated admin subscription records |
 | `ALLOWED_ORIGIN` | Railway / server | Frontend origins allowed to call the API. Use a comma-separated list such as `http://localhost:5173,https://threejmedia.co.za,https://admin.threejmedia.co.za` |
 | `AUTH0_DOMAIN` | Railway / server | Auth0 tenant domain used for database-connection signup |
 | `AUTH0_CLIENT_ID` | Railway / server | Auth0 application client ID used for signup and server-side ID token verification |
@@ -41,7 +43,7 @@ Database: Supabase Postgres
 | `DOMAIN_FULFILLMENT_ADMIN_TOKEN` | Railway / server | Shared secret required for the internal endpoint that submits stored onboarding details to HostAfrica |
 | `PORT` | Railway / server | Port used by the Railway API locally and in deployment |
 
-3. In Supabase SQL Editor, run [`supabase/newsletter_subscribers.sql`](/Users/jerry/Desktop/threejmedia.co.za/supabase/newsletter_subscribers.sql), [`supabase/client_signups.sql`](/Users/jerry/Desktop/threejmedia.co.za/supabase/client_signups.sql), and [`supabase/budget_quote_requests.sql`](/Users/jerry/Desktop/threejmedia.co.za/supabase/budget_quote_requests.sql).
+3. In Supabase SQL Editor, run [`supabase/newsletter_subscribers.sql`](/Users/jerry/Desktop/threejmedia.co.za/supabase/newsletter_subscribers.sql), [`supabase/client_signups.sql`](/Users/jerry/Desktop/threejmedia.co.za/supabase/client_signups.sql), [`supabase/budget_quote_requests.sql`](/Users/jerry/Desktop/threejmedia.co.za/supabase/budget_quote_requests.sql), [`supabase/admin_clients.sql`](/Users/jerry/Desktop/threejmedia.co.za/supabase/admin_clients.sql), and [`supabase/admin_subscriptions.sql`](/Users/jerry/Desktop/threejmedia.co.za/supabase/admin_subscriptions.sql).
 4. Run both services together with `npm run dev:all`.
 5. Or run them separately with `npm run dev` and `npm run dev:api`.
 6. `npm run dev:all` starts the API without watch mode so it stays stable on machines with low file watcher limits.
@@ -59,6 +61,8 @@ Database: Supabase Postgres
    - `SUPABASE_SERVICE_ROLE_KEY`
    - `SUPABASE_NEWSLETTER_TABLE`
    - `SUPABASE_SIGNUPS_TABLE`
+   - `SUPABASE_ADMIN_CLIENTS_TABLE`
+   - `SUPABASE_ADMIN_SUBSCRIPTIONS_TABLE`
    - `ALLOWED_ORIGIN`
    - `AUTH0_DOMAIN`
    - `AUTH0_CLIENT_ID`
@@ -87,6 +91,11 @@ What it includes right now:
 - allowlist-based access using `ADMIN_ALLOWED_EMAILS`
 - live overview data from Supabase signup and Paystack-linked records
 - client, subscription, renewal, and readiness views for business operations
+
+Dedicated admin data foundation now available:
+- `admin_clients` for long-lived customer records
+- `admin_subscriptions` for billing/subscription lifecycle records
+- protected admin API scaffolding at `GET/POST /api/admin/clients` and `GET/POST /api/admin/subscriptions`
 
 What to configure before using the subdomain:
 1. Point `admin.threejmedia.co.za` to the frontend deployment.
@@ -136,6 +145,10 @@ Use a SPA application for the frontend login flow and a regular Auth0 API identi
 - `POST /api/paystack/webhook`
 - `GET /api/me`
 - `GET /api/admin/overview`
+- `GET /api/admin/clients`
+- `POST /api/admin/clients`
+- `GET /api/admin/subscriptions`
+- `POST /api/admin/subscriptions`
 - `POST /api/domain-fulfillment/onboarding`
 - `POST /api/domain-fulfillment/submit`
 
